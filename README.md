@@ -45,6 +45,7 @@ You're a lone ship in a neon arena, and the grid under it bends and ripples with
 | Dash (i-frames) | Shift | A / LB | DASH button |
 | Bomb | Space / Right click | B / RB | BOMB button |
 | Pause | Esc / P | Start | ❚❚ button |
+| Mute | M | — | Pause menu |
 
 ### Technical highlights
 
@@ -57,7 +58,7 @@ What this project demonstrates:
 | **Spring-mass warp grid** (`game/grid.ts`) | About 1,300 point masses and 2,600 damped springs stored in struct-of-arrays `Float32Array`s. Explosions push it, singularities pull it in, and the ship leaves a wake. |
 | **Particle system** (`game/particles.ts`) | 12k-particle ring buffer with zero allocations per frame. A **counting sort** groups particles by color, alpha and width so each batch is a single `stroke()`, about 70 draw calls instead of 12,000. |
 | **Spatial hashing** (`engine/spatialHash.ts`) | Uniform-grid broadphase for bullet-vs-enemy hits, flocking separation and bullet-dodging AI. Queries de-duplicate with a stamp instead of allocating a `Set`. |
-| **Procedural audio** (`engine/audio.ts`) | Every sound effect is synthesized live with WebAudio oscillators and filtered noise. The synthwave soundtrack comes from a lookahead step sequencer with sample-accurate timing, and its layers (hats, snare, arpeggio, tempo) build up with the action. |
+| **Procedural audio** (`engine/audio.ts`, `synth.ts`, `music.ts`) | No audio files at all. 27 layered sound effects are built from oscillators, FM pairs, filtered noise and distortion. They are panned by screen position, sent through a generated convolution reverb, and big hits duck the music. Shard pickups climb a pentatonic scale, so collecting a chain plays a melody. The adaptive soundtrack has four songs (title, game, boss, upgrade bay) that switch on the next bar line. In-game, new layers come in as the action builds and the kick pumps the mix sidechain-style. Pausing or shopping muffles everything through a lowpass. A test harness renders each sound offline with `OfflineAudioContext` and checks its level. |
 | **Wave director** (`game/waves.ts`) | Deterministic, seeded and budget-based. Enemies are bought from a budget that grows with each wave, new enemies get a debut wave, and groups spawn in formations. It's fully unit-tested. |
 | **Unified input** (`engine/input.ts`) | Keyboard, mouse, gamepad and multi-touch all reduce to one abstract state, and the last device you touched wins. |
 | **Upgrade economy** (`game/upgrades.ts`) | Pure, data-driven upgrade definitions with rising prices, Fisher–Yates offer rolls that avoid maxed items, and stats derived from levels. It's unit-tested. |
@@ -140,6 +141,7 @@ Vous pilotez un vaisseau seul dans une arène néon, et la grille sous vos pieds
 | Esquive (invulnérable) | Maj | A / LB | Bouton DASH |
 | Bombe | Espace / clic droit | B / RB | Bouton BOMB |
 | Pause | Échap / P | Start | Bouton ❚❚ |
+| Couper le son | M | — | Menu pause |
 
 ### Points techniques
 
@@ -148,7 +150,7 @@ Vous pilotez un vaisseau seul dans une arène néon, et la grille sous vos pieds
 - **Grille masses-ressorts** : environ 1 300 points et 2 600 ressorts amortis stockés dans des `Float32Array`.
 - **Particules** : tampon circulaire de 12 000 particules, aucune allocation par image, et un **tri par comptage** qui réduit les appels de dessin à environ 70 lots.
 - **Hachage spatial** pour les collisions, la séparation des essaims et l'IA d'esquive.
-- **Audio 100 % procédural** : effets synthétisés en direct avec WebAudio et bande-son synthwave produite par un séquenceur dont l'intensité suit l'action.
+- **Audio 100 % procédural** : 27 effets en couches (FM, bruit filtré, distorsion) positionnés en stéréo, avec réverbération et atténuation de la musique sur les gros impacts. Les éclats jouent une gamme pentatonique. La bande-son adaptative compte quatre morceaux (titre, jeu, boss, atelier) qui s'enchaînent à la mesure, avec un effet de pompage et un filtre étouffé en pause.
 - **Directeur de vagues** déterministe à budget, couvert par des tests unitaires.
 - **i18n typée** : TypeScript et un test vérifient que chaque clé est traduite dans chaque langue.
 

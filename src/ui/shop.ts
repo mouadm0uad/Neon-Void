@@ -51,7 +51,7 @@ export class ShopUI {
   }
 
   private deny(): void {
-    this.audio.play('hit', 0.5);
+    this.audio.play('deny');
     const w = this.root.querySelector<HTMLElement>('.wallet')!;
     w.classList.remove('shake');
     void w.offsetWidth; // restart animation
@@ -60,7 +60,7 @@ export class ShopUI {
 
   private buy(id: UpgradeId): void {
     if (!this.world.buy(id)) return this.deny();
-    this.audio.play('powerup');
+    this.audio.play('buy');
     this.render();
     this.root.querySelector(`[data-upgrade="${id}"]`)?.classList.add('bought');
   }

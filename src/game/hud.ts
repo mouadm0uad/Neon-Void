@@ -14,6 +14,7 @@ export interface HudOptions {
   showFps: boolean;
   fps: number;
   playing: boolean;
+  muted: boolean;
 }
 
 export function drawHud(g: CanvasRenderingContext2D, w: World, input: Input, W: number, H: number, o: HudOptions): void {
@@ -21,6 +22,16 @@ export function drawHud(g: CanvasRenderingContext2D, w: World, input: Input, W: 
   g.globalCompositeOperation = 'source-over';
   const s = clamp(Math.min(W, H) / 800, 0.6, 1.3);
   const pad = 20 * s;
+
+  // Low-life warning: pulsing red edges in time with the heartbeat.
+  if (o.playing && !w.attract && !w.dead && w.lives === 1) {
+    const beat = Math.pow(Math.max(0, Math.sin(w.time * Math.PI / 1.15 * 2)), 8);
+    const grad = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.7);
+    grad.addColorStop(0, 'rgba(255,30,60,0)');
+    grad.addColorStop(1, `rgba(255,30,60,${0.12 + beat * 0.22})`);
+    g.fillStyle = grad;
+    g.fillRect(0, 0, W, H);
+  }
 
   if (o.playing && !w.attract) {
     g.textBaseline = 'top';
@@ -207,6 +218,30 @@ export function drawHud(g: CanvasRenderingContext2D, w: World, input: Input, W: 
       g.lineTo(mx + ax * 14, my + ay * 14);
     }
     g.stroke();
+  }
+
+  // First-wave controls hint.
+  if (o.playing && !w.attract && w.wave <= 1 && w.hintT < 9) {
+    const a = clamp(w.hintT / 0.6, 0, 1) * clamp((9 - w.hintT) / 1, 0, 1);
+    const dev = input.state.device;
+    const key = dev === 'gamepad' ? 'hintPad' : dev === 'touch' ? 'hintTouch' : 'hintKb';
+    g.textAlign = 'center';
+    g.textBaseline = 'bottom';
+    g.font = `600 ${13 * s}px ${FONT}`;
+    const text = t(key).toUpperCase();
+    const tw = g.measureText(text).width;
+    g.fillStyle = `rgba(4,2,12,${0.6 * a})`;
+    g.fillRect(W / 2 - tw / 2 - 14, H - 64 * s - 22 * s, tw + 28, 30 * s);
+    g.fillStyle = `rgba(200,240,255,${a})`;
+    g.fillText(text, W / 2, H - 64 * s);
+  }
+
+  if (o.muted && o.playing) {
+    g.textAlign = 'right';
+    g.textBaseline = 'bottom';
+    g.font = `600 ${11 * s}px ${FONT}`;
+    g.fillStyle = 'rgba(255,255,255,0.45)';
+    g.fillText(t('muted').toUpperCase(), W - pad, H - pad - (o.showFps ? 16 : 0));
   }
 
   if (o.showFps) {

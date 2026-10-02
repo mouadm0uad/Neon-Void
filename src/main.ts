@@ -3,7 +3,7 @@
  * machine  title → playing ⇄ paused → over → (playing | title).
  */
 import './style.css';
-import { AudioEngine } from './engine/audio';
+import { ALL_SFX, AudioEngine } from './engine/audio';
 import { Input } from './engine/input';
 import { GameLoop } from './engine/loop';
 import { Renderer, type BloomQuality } from './engine/renderer';
@@ -26,6 +26,7 @@ interface Settings {
   bloom: BloomQuality;
   shake: number;
   fps: boolean;
+  muted: boolean;
 }
 
 const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -36,6 +37,7 @@ const settings = load<Settings>('settings', {
   bloom: 'high',
   shake: reducedMotion ? 0.3 : 1,
   fps: false,
+  muted: false,
 });
 let best = load<number>('best', 0);
 
@@ -62,7 +64,9 @@ const nav = new MenuNav(() => (screen ? document.querySelector<HTMLElement>(`[da
 
 function openShop(nextWave: number): void {
   state = 'shop';
+  audio.setSong('shop');
   shop.open(nextWave, () => {
+    audio.setSong('game');
     world.closeShop();
     state = 'playing';
     show(null);
@@ -96,6 +100,7 @@ function applySettings(): void {
   $('#best-score').textContent = best.toLocaleString();
   buildLegend();
   shop.refresh();
+  setMuted(settings.muted);
   save('settings', settings);
 }
 
@@ -179,7 +184,8 @@ function show(s: Screen): void {
 
 function startGame(): void {
   audio.unlock();
-  audio.musicOn = true;
+  audio.muffle(false);
+  audio.setSong('game');
   world.reset(false);
   state = 'playing';
   show(null);
@@ -188,27 +194,30 @@ function startGame(): void {
 function pause(): void {
   if (state !== 'playing') return;
   state = 'paused';
-  audio.musicOn = false;
+  audio.muffle(true);
   show('pause');
 }
 
 function resume(): void {
   if (state !== 'paused') return;
   state = 'playing';
-  audio.musicOn = true;
+  audio.muffle(false);
   show(null);
 }
 
 function toTitle(): void {
   state = 'title';
   world.reset(true);
-  audio.musicOn = true;
+  audio.muffle(false);
+  audio.setSong('title');
   show('title');
 }
 
 function onGameOver(s: RunStats): void {
   if (world.attract) return;
   state = 'over';
+  audio.setSong('none');
+  audio.play('gameOver');
   const record = s.score > best;
   if (record) {
     best = s.score;
@@ -255,6 +264,9 @@ document.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((b) =>
       case 'back':
         show(returnScreen);
         break;
+      case 'mute':
+        setMuted(!settings.muted);
+        break;
     }
   }),
 );
@@ -269,8 +281,33 @@ document.querySelectorAll<HTMLButtonElement>('[data-touch]').forEach((b) =>
 
 input.onGesture = () => {
   audio.unlock();
-  if (!audio.musicOn && state !== 'paused') audio.musicOn = true;
 };
+// Any first interaction anywhere (menus included) wakes the audio, so the title theme plays.
+for (const ev of ['pointerdown', 'keydown', 'touchstart'] as const) {
+  window.addEventListener(ev, () => audio.unlock(), { capture: true, passive: true });
+}
+
+// UI sounds: a soft tick when focus moves between controls.
+$('#ui').addEventListener('focusin', (e) => {
+  const el = e.target as HTMLElement;
+  if (el.matches('button, select, input')) audio.play('move');
+});
+
+function setMuted(m: boolean): void {
+  settings.muted = m;
+  audio.muted = m;
+  document.querySelectorAll<HTMLElement>('[data-action="mute"]').forEach((b) => {
+    b.textContent = `${t('sound')} · ${m ? t('off') : t('on')}`;
+    b.setAttribute('aria-pressed', String(!m));
+  });
+  save('settings', settings);
+}
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyM' && !e.repeat) {
+    audio.unlock();
+    setMuted(!settings.muted);
+  }
+});
 
 window.addEventListener('blur', pause);
 document.addEventListener('visibilitychange', () => {
@@ -311,6 +348,7 @@ const loop = new GameLoop({
           break;
         }
         world.update(dt, playerControls());
+        if (state === 'playing') audio.setSong(world.boss ? 'boss' : 'game');
         if (state === 'playing' && input.state.device === 'touch') $('#touch-buttons').hidden = false;
         break;
       case 'paused':
@@ -331,13 +369,16 @@ const loop = new GameLoop({
       showFps: settings.fps,
       fps: loop.fps,
       playing: state === 'playing' || state === 'paused',
+      muted: settings.muted,
     });
   },
 });
 
 applySettings();
+setMuted(settings.muted);
+audio.setSong('title');
 show('title');
 loop.start();
 
 // Expose for debugging / automated playtests.
-(window as unknown as { __neonVoid: unknown }).__neonVoid = { world, renderer, startGame };
+(window as unknown as { __neonVoid: unknown }).__neonVoid = { world, renderer, startGame, audio, AudioEngine, ALL_SFX };

@@ -2,7 +2,7 @@
  * The simulation: owns every entity and system, runs gameplay rules, and draws
  * the world layer. Pure-ish — it talks to the outside only through `hooks`.
  */
-import type { AudioEngine } from '../engine/audio';
+import type { AudioEngine, PlayOpts, Sfx } from '../engine/audio';
 import { Rng } from '../engine/rng';
 import { SpatialHash } from '../engine/spatialHash';
 import { TAU, angleDiff, clamp, damp, len } from '../engine/math';
@@ -136,6 +136,10 @@ export class World implements BossHost {
   credits = 0;
   creditsEarned = 0;
   private shieldRegenT = 0;
+  private heartT = 0;
+  private hitThisWave = false;
+  /** Seconds since the run started showing the controls hint. */
+  hintT = 0;
   readonly drones: { cd: number; x: number; y: number }[] = [];
   time = 0;
   runTime = 0;
@@ -176,6 +180,9 @@ export class World implements BossHost {
     this.derived = derive(this.levels);
     this.credits = this.creditsEarned = 0;
     this.shieldRegenT = 0;
+    this.heartT = 0;
+    this.hitThisWave = false;
+    this.hintT = 0;
     this.shopT = 0;
     this.waitingShop = false;
     this.drones.length = 0;
@@ -236,6 +243,16 @@ export class World implements BossHost {
     this.particles.update(sdt, this.attractors);
     this.grid.update(sdt);
 
+    // Low-life heartbeat.
+    if (!this.attract && !this.dead && this.lives === 1) {
+      this.heartT -= dt;
+      if (this.heartT <= 0) {
+        this.heartT = 1.15;
+        this.hooks.audio.play('heartbeat');
+      }
+    }
+    if (!this.attract) this.hintT += dt;
+
     if (this.comboT > 0) {
       this.comboT -= sdt;
       if (this.comboT <= 0) this.combo = 0;
@@ -290,7 +307,7 @@ export class World implements BossHost {
       this.dashDy = dy / l;
       this.dashT = PLAYER.dashTime;
       this.dashCd = PLAYER.dashCooldown * this.derived.dashCdMul;
-      this.hooks.audio.play('dash');
+      this.snd('dash');
       this.particles.ring(this.px, this.py, 24, C.Cyan, 320, 0.35);
     }
 
@@ -361,6 +378,7 @@ export class World implements BossHost {
         this.shieldRegenT = 0;
         this.shield = true;
         this.particles.ring(this.px, this.py, 36, C.Cyan, 260, 0.4);
+        this.snd('shieldUp');
         if (!this.attract) this.pushText(this.px, this.py - 36, t('shieldOnline'), C.Cyan, 16);
       }
     }
@@ -406,6 +424,7 @@ export class World implements BossHost {
       b.color = C.Green;
       b.pierce = 0;
       this.particles.cone(d.x, d.y, aim, 0.5, 1, C.Green, 200, 0.12);
+      this.snd('drone', d.x);
     }
   }
 
@@ -426,7 +445,7 @@ export class World implements BossHost {
       b.color = this.rapidT > 0 ? C.Orange : C.Gold;
       b.pierce = this.weapon >= 5 ? 1 : 0;
     }
-    this.hooks.audio.play('shoot', 0.9 + Math.random() * 0.2);
+    this.snd('shoot', this.px, { pitch: (0.9 + Math.random() * 0.2) * (this.rapidT > 0 ? 1.2 : 1) });
     this.particles.cone(this.px + cos * 18, this.py + sin * 18, aim, 0.6, 2, C.Gold, 300, 0.12);
   }
 
@@ -466,7 +485,7 @@ export class World implements BossHost {
       this.bossDelay -= dt;
       if (this.bossDelay <= 0) {
         this.boss = new Boss(plan.number / 5);
-        this.hooks.audio.play('wave');
+        this.snd('bossPhase', 0);
         this.shake(0.4);
       }
     }
@@ -487,6 +506,19 @@ export class World implements BossHost {
   }
 
   private endWave(delay: number): void {
+    if (!this.attract && this.wave > 0) {
+      // Wave-clear bonus (flat, not multiplied) — doubled if you weren't hit.
+      const bonus = 500 * this.wave * (this.hitThisWave ? 1 : 2);
+      this.score += bonus;
+      this.banner = {
+        text: t('waveCleared', { n: this.wave }),
+        sub: `${this.hitThisWave ? t('bonus') : t('flawless')} +${bonus.toLocaleString()}`,
+        t: 0,
+        color: this.hitThisWave ? C.Green : C.Gold,
+      };
+      this.hooks.audio.play('waveClear');
+    }
+    this.hitThisWave = false;
     if (this.shopDue) {
       // Vacuum up the remaining shards, then open the bay.
       this.shopT = 2.2;
@@ -530,7 +562,7 @@ export class World implements BossHost {
     } else if (!this.attract) {
       this.banner = { text: t('waveIncoming', { n }), sub: '', t: 0, color: C.Cyan };
     }
-    if (!this.attract) this.hooks.audio.play('wave');
+    if (!this.attract) this.hooks.audio.play(this.plan.boss ? 'bossCharge' : 'wave');
   }
 
   private spawnGroup(g: SpawnGroup, speedMul: number): void {
@@ -598,7 +630,7 @@ export class World implements BossHost {
       e.spawning = 0.9 + i * 0.05;
       e.speedMul = speedMul;
     });
-    this.hooks.audio.play('spawn');
+    this.snd('spawn', pts[0]?.[0] ?? 0);
   }
 
   private makeEnemy(kind: EnemyKind, x: number, y: number): Enemy {
@@ -632,6 +664,14 @@ export class World implements BossHost {
     b.color = color;
   }
 
+  /** Positional sound: pans by screen position, softer and sparser in attract mode. */
+  snd(name: Sfx, x = this.px, o: PlayOpts = {}): void {
+    if (this.attract && (name === 'shoot' || name === 'drone' || name === 'spawn' || name === 'hit' || name === 'pickup')) return;
+    const r = this.hooks.renderer;
+    const pan = clamp((x - r.camera.x) / (r.viewHalf.w || 1), -1, 1) * 0.75;
+    this.hooks.audio.play(name, { ...o, pan, vol: (o.vol ?? 1) * (this.attract ? 0.35 : 1) });
+  }
+
   shake(amount: number): void {
     this.hooks.renderer.addTrauma(amount);
   }
@@ -644,8 +684,8 @@ export class World implements BossHost {
     this.grid.applyExplosive(x, y, force, radius);
   }
 
-  sfx(name: 'enemyShoot' | 'dash' | 'spawn'): void {
-    this.hooks.audio.play(name);
+  sfx(name: 'enemyShoot' | 'dash' | 'spawn' | 'bossCharge'): void {
+    this.snd(name, this.boss?.x ?? 0);
   }
 
   // ─────────────────────────────── enemies ───────────────────────────────
@@ -741,7 +781,7 @@ export class World implements BossHost {
           if (e.cooldown <= 0 && !targetless && d < 900) {
             e.cooldown = 2.3;
             for (const o of [-0.12, 0, 0.12]) this.fireEnemyBullet(e.x + ux * 20, e.y + uy * 20, e.angle + o, 300, C.Orange, 6);
-            this.hooks.audio.play('enemyShoot');
+            this.snd('enemyShoot', e.x);
             this.particles.cone(e.x + ux * 20, e.y + uy * 20, e.angle, 0.8, 6, C.Orange, 260, 0.25);
           }
           break;
@@ -767,6 +807,7 @@ export class World implements BossHost {
               e.hp += 2;
               e.maxHp = Math.max(e.maxHp, e.hp);
               this.particles.burst(o.x, o.y, 14, o.def.color, 200, 0.5);
+              this.snd('wellGulp', e.x);
             }
           }
           if (e.fed >= 10) this.wellSupernova(e);
@@ -821,7 +862,7 @@ export class World implements BossHost {
     this.particles.ring(e.x, e.y, 80, C.Orange, 700, 0.8);
     this.grid.applyExplosive(e.x, e.y, 10, 500);
     this.shake(0.5);
-    this.hooks.audio.play('bigExplode');
+    this.snd('bigExplode', e.x);
     for (let i = 0; i < 10; i++) {
       const a = (i / 10) * TAU;
       const s = this.makeEnemy('seeker', e.x + Math.cos(a) * 30, e.y + Math.sin(a) * 30);
@@ -854,7 +895,7 @@ export class World implements BossHost {
       this.hooks.renderer.flashColor = '255,210,120';
       this.targetTimeScale = 0.25;
       this.timeScale = 0.25;
-      this.hooks.audio.play('bigExplode');
+      this.snd('bossDeath', b.x);
       this.clearEnemyBullets(true);
       for (let i = 0; i < 30; i++) this.dropShard(b.x, b.y, 500);
       this.dropPowerup(b.x - 40, b.y, 'weapon');
@@ -910,7 +951,7 @@ export class World implements BossHost {
         b.alive = false;
         const phaseChanged = boss.damage(b.damage);
         this.particles.cone(b.x, b.y, Math.atan2(-b.vy, -b.vx), 1.2, 3, C.Gold, 300, 0.3);
-        this.hooks.audio.play('hit', 0.7);
+        this.snd('hit', b.x, { pitch: 0.7 });
         this.score += 5 * this.mult;
         if (phaseChanged && boss.mode !== 'dying') {
           this.shake(0.5);
@@ -918,7 +959,7 @@ export class World implements BossHost {
           this.clearEnemyBullets(true);
           this.hooks.renderer.flash = 0.6;
           this.hooks.renderer.flashColor = '255,80,160';
-          this.hooks.audio.play('bigExplode');
+          this.snd('bossPhase', boss.x);
           this.particles.ring(boss.x, boss.y, 120, C.Magenta, 900, 0.8);
         }
       }
@@ -952,7 +993,7 @@ export class World implements BossHost {
     const back = Math.atan2(-b.vy, -b.vx);
     if (e.hp <= 0) this.killEnemy(e, true, Math.atan2(b.vy, b.vx));
     else {
-      this.hooks.audio.play('hit');
+      this.snd('hit', e.x);
       this.particles.cone(b.x, b.y, back, 1.2, 4, e.def.color, 280, 0.3);
       // Knockback.
       e.vx += b.vx * 0.04;
@@ -970,7 +1011,8 @@ export class World implements BossHost {
     this.particles.burst(e.x, e.y, 8, C.White, 300, 0.4);
     if (dir !== undefined) this.particles.cone(e.x, e.y, dir, 0.7, 14, def.color, 700, 0.6);
     this.grid.applyExplosive(e.x, e.y, big ? 4 : 2, big ? 260 : 150);
-    this.hooks.audio.play(e.kind === 'well' ? 'bigExplode' : 'explode', 0.8 + Math.random() * 0.5);
+    const size = e.kind === 'mini' ? 1.5 : big ? 0.75 : 1.05;
+    this.snd(e.kind === 'well' ? 'bigExplode' : 'explode', e.x, { pitch: size * (0.9 + Math.random() * 0.2), vol: e.kind === 'mini' ? 0.6 : 1 });
     this.shake(e.kind === 'well' ? 0.45 : 0.08);
 
     if (e.kind === 'splitter') {
@@ -1012,7 +1054,7 @@ export class World implements BossHost {
     if (!this.attract && this.score >= this.extraLifeAt) {
       this.extraLifeAt += 150000;
       this.lives++;
-      this.hooks.audio.play('powerup');
+      this.snd('extraLife');
       this.pushText(this.px, this.py - 30, t('pickupLife'), C.Green, 22);
     }
   }
@@ -1041,12 +1083,13 @@ export class World implements BossHost {
       this.invuln = 1.2;
       this.particles.ring(this.px, this.py, 60, C.Cyan, 600, 0.6);
       this.grid.applyExplosive(this.px, this.py, 6, 300);
-      this.hooks.audio.play('bomb');
+      this.snd('shieldBreak');
       this.shake(0.4);
       this.clearNear(260);
       return;
     }
     this.lives--;
+    this.hitThisWave = true;
     this.mult = 1;
     this.weapon = Math.max(1, this.weapon - 1);
     this.rapidT = 0;
@@ -1059,7 +1102,7 @@ export class World implements BossHost {
     this.shake(0.9);
     this.hooks.renderer.flash = 0.8;
     this.hooks.renderer.flashColor = '255,60,120';
-    this.hooks.audio.play('playerHit');
+    this.snd('playerHit');
     this.clearEnemyBullets(true);
     this.clearNear(340);
     if (this.lives <= 0) {
@@ -1089,7 +1132,7 @@ export class World implements BossHost {
     this.hooks.renderer.flash = 0.9;
     this.hooks.renderer.flashColor = '120,240,255';
     this.shake(0.8);
-    this.hooks.audio.play('bomb');
+    this.snd('bomb');
     this.invuln = Math.max(this.invuln, 0.6);
     if (this.boss?.vulnerable) this.boss.damage(30);
   }
@@ -1206,11 +1249,11 @@ export class World implements BossHost {
       this.credits += this.derived.creditsPerShard;
       this.creditsEarned += this.derived.creditsPerShard;
       this.maxMult = Math.max(this.maxMult, this.mult);
-      this.hooks.audio.play('pickup', 1 + Math.min(1.5, this.mult / 200));
+      this.snd('pickup', p.x);
       this.particles.burst(p.x, p.y, 3, C.Green, 120, 0.3);
       return;
     }
-    this.hooks.audio.play('powerup');
+    this.snd('powerup', p.x);
     this.particles.ring(p.x, p.y, 40, col, 400, 0.5);
     let label = '';
     switch (p.kind) {

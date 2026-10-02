@@ -90,6 +90,14 @@ const en = {
   upRepair: 'Hull repair',
   upRepairDesc: '+1 life',
   shieldOnline: 'Shield online',
+  sound: 'Sound',
+  muted: 'Muted · M',
+  waveCleared: 'Wave {n} cleared',
+  flawless: 'Flawless',
+  bonus: 'Bonus',
+  hintKb: 'WASD move · Mouse aim & fire · Shift dash · Space bomb',
+  hintPad: 'Left stick move · Right stick aim & fire · A dash · B bomb',
+  hintTouch: 'Left thumb moves · Right thumb aims & fires',
 };
 
 export type I18nKey = keyof typeof en;
@@ -182,6 +190,14 @@ const fr: Record<I18nKey, string> = {
   upRepair: 'Réparation de coque',
   upRepairDesc: '+1 vie',
   shieldOnline: 'Bouclier actif',
+  sound: 'Son',
+  muted: 'Son coupé · M',
+  waveCleared: 'Vague {n} terminée',
+  flawless: 'Sans faute',
+  bonus: 'Bonus',
+  hintKb: 'ZQSD/WASD déplacer · Souris viser et tirer · Maj esquive · Espace bombe',
+  hintPad: 'Stick gauche déplacer · Stick droit viser et tirer · A esquive · B bombe',
+  hintTouch: 'Pouce gauche déplace · Pouce droit vise et tire',
 };
 
 export const dictionaries: Record<Lang, Record<I18nKey, string>> = { en, fr };

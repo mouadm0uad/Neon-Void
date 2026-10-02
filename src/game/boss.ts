@@ -16,7 +16,7 @@ export interface BossHost {
   shake(amount: number): void;
   sparks(x: number, y: number, n: number, color: number, speed: number): void;
   gridPush(x: number, y: number, force: number, radius: number): void;
-  sfx(name: 'enemyShoot' | 'dash' | 'spawn'): void;
+  sfx(name: 'enemyShoot' | 'dash' | 'spawn' | 'bossCharge'): void;
 }
 
 type Mode = 'enter' | 'fight' | 'telegraph' | 'charge' | 'dying';
@@ -212,6 +212,7 @@ export class Boss {
         this.chargeT = 5.5;
         this.setMode('telegraph');
         this.chargeAngle = toPlayer;
+        host.sfx('bossCharge');
       }
     }
   }
