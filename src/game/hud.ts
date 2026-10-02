@@ -39,6 +39,11 @@ export function drawHud(g: CanvasRenderingContext2D, w: World, input: Input, W: 
     g.fillStyle = rgb(C.Green);
     g.font = `700 ${18 * s}px ${FONT}`;
     g.fillText(`×${w.mult}`, pad, pad + 50 * s);
+    // Shard wallet (spent in the upgrade bay).
+    g.shadowColor = rgb(C.Gold);
+    g.fillStyle = rgb(C.Gold, 0.95);
+    g.font = `600 ${13 * s}px ${FONT}`;
+    g.fillText(`◆ ${w.credits.toLocaleString()}`, pad, pad + 74 * s);
     if (w.combo >= 5) {
       const pulse = 1 + Math.max(0, w.comboT - SCORE_PULSE) * 0.4;
       g.fillStyle = rgb(C.Gold, clamp(w.comboT, 0, 1));

@@ -29,6 +29,7 @@ You're a lone ship in a neon arena, and the grid under it bends and ripples with
 
 - **6 enemy types**, each with its own behavior: wanderers, homing seekers, *dodgers* that sidestep your bullets, splitters, gunners that keep their distance, and **singularities** that bend your bullets, pull in your ship and swallow other enemies until they blow up.
 - **Boss with 3 phases**: spirals, rings with a gap you can slip through, aimed fans, minion summons and telegraphed charges that bounce off the walls.
+- **Upgrade bay (roguelite)**: shards are also your currency. After waves 2, 5, 7, 10 and so on, spend them on upgrades that last the whole run: fire rate, plasma damage, thrusters, dash cooldown, tractor field, **orbiting wing drones** that aim on their own, a **self-recharging shield**, and a shard refinery. You get 4 random offers per visit, plus a reroll that costs more each time, and bombs and hull repairs are always for sale.
 - **Power-ups**: weapon levels (up to 7 streams with piercing), shield, overdrive, magnet, bombs, extra lives. A pity timer stops long dry spells.
 - **Game feel**: hit-stop, slow motion, trauma-based screen shake, flashes, combos and floating scores.
 - **Plays anywhere**: keyboard + mouse, **gamepad** (standard mapping), or **touch** with two floating virtual sticks.
@@ -59,6 +60,8 @@ What this project demonstrates:
 | **Procedural audio** (`engine/audio.ts`) | Every sound effect is synthesized live with WebAudio oscillators and filtered noise. The synthwave soundtrack comes from a lookahead step sequencer with sample-accurate timing, and its layers (hats, snare, arpeggio, tempo) build up with the action. |
 | **Wave director** (`game/waves.ts`) | Deterministic, seeded and budget-based. Enemies are bought from a budget that grows with each wave, new enemies get a debut wave, and groups spawn in formations. It's fully unit-tested. |
 | **Unified input** (`engine/input.ts`) | Keyboard, mouse, gamepad and multi-touch all reduce to one abstract state, and the last device you touched wins. |
+| **Upgrade economy** (`game/upgrades.ts`) | Pure, data-driven upgrade definitions with rising prices, Fisher–Yates offer rolls that avoid maxed items, and stats derived from levels. It's unit-tested. |
+| **Spatial menu navigation** (`ui/menuNav.ts`) | The whole DOM UI works with a gamepad (D-pad or stick, A and B) and arrow keys. Focus moves to the nearest element in that direction, and sliders and selects can be adjusted in place. |
 | **Typed i18n** (`game/i18n.ts`) | TypeScript and a test both check that every key exists in every language. |
 
 Gameplay code reaches the browser only through small interfaces (`WorldHooks`, `BossHost`). That keeps the simulation testable and lets the title screen run the same `World` with an AI providing the `Controls`.
@@ -102,7 +105,11 @@ src/
 │   ├── hud.ts
 │   ├── entities.ts
 │   ├── config.ts     # tunables & palette
+│   ├── upgrades.ts   # roguelite upgrade economy
 │   └── i18n.ts
+├── ui/
+│   ├── shop.ts       # upgrade bay screen
+│   └── menuNav.ts    # gamepad / arrow-key menu navigation
 └── main.ts           # app shell & state machine
 tests/                # vitest suites
 ```
@@ -117,6 +124,7 @@ Vous pilotez un vaisseau seul dans une arène néon, et la grille sous vos pieds
 
 - **6 types d'ennemis**, chacun avec son comportement : rôdeurs, traqueurs à tête chercheuse, *esquiveurs* qui évitent vos tirs, diviseurs, artilleurs qui gardent leurs distances, et **singularités** qui courbent vos projectiles, attirent votre vaisseau et avalent les autres ennemis jusqu'à exploser.
 - **Boss en 3 phases** : spirales, anneaux avec une ouverture pour passer, tirs en éventail, invocation de sbires et charges annoncées qui rebondissent sur les murs.
+- **Atelier (roguelite)** : les éclats servent aussi de monnaie. Après les vagues 2, 5, 7, 10, etc., achetez des améliorations valables toute la partie : cadence, dégâts plasma, propulseurs, recharge d'esquive, rayon tracteur, **drones d'escorte** qui visent tout seuls, **bouclier qui se recharge** et raffinerie d'éclats. Chaque visite propose 4 offres au hasard, avec une relance de plus en plus chère, et les bombes et réparations sont toujours en vente.
 - **Bonus** : niveaux d'arme (jusqu'à 7 flux de tir perforants), bouclier, surcharge, aimant, bombes, vies supplémentaires. Un système anti-malchance évite les longues séries sans bonus.
 - **Sensations de jeu** : arrêt sur impact (hit-stop), ralenti, tremblement d'écran progressif, flashs, combos et scores flottants.
 - **Jouable partout** : clavier + souris, **manette** (mapping standard) ou **tactile** avec deux joysticks virtuels flottants.
@@ -160,6 +168,7 @@ Poussez le dépôt sur GitHub, puis choisissez **Settings → Pages → Source :
 ---
 
 <div align="center">
+<img src="docs/shop.png" alt="Upgrade bay" width="100%" />
 <img src="docs/warp-grid.png" alt="Bomb shockwave warping the grid" width="49%" />
 <img src="docs/title.png" alt="Title screen" width="49%" />
 

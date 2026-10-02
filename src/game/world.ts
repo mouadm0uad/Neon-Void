@@ -15,6 +15,7 @@ import { t } from './i18n';
 import { Particles, type Attractor } from './particles';
 import { drawEnemy, drawPickup, drawShip, pickupColor } from './shapes';
 import { planWave, type SpawnGroup, type WavePlan } from './waves';
+import { UPGRADES, cost, derive, emptyLevels, isMaxed, shopAfterWave, type Derived, type Levels, type UpgradeId } from './upgrades';
 
 export interface Controls {
   moveX: number;
@@ -39,6 +40,8 @@ export interface WorldHooks {
   renderer: Renderer;
   shakeScale: () => number;
   onGameOver: (stats: RunStats) => void;
+  /** Called when the upgrade bay should open; the world waits until `closeShop()`. */
+  onShop: (nextWave: number) => void;
 }
 
 interface Shockwave {
@@ -124,6 +127,16 @@ export class World implements BossHost {
   private waveT = 0;
   private groupIdx = 0;
   private intermission = 0;
+  private shopT = 0;
+  waitingShop = false;
+
+  // Upgrades.
+  levels: Levels = emptyLevels();
+  derived: Derived = derive(this.levels);
+  credits = 0;
+  creditsEarned = 0;
+  private shieldRegenT = 0;
+  readonly drones: { cd: number; x: number; y: number }[] = [];
   time = 0;
   runTime = 0;
   timeScale = 1;
@@ -158,6 +171,14 @@ export class World implements BossHost {
     this.weapon = attract ? 3 : 1;
     this.shield = false;
     this.rapidT = this.magnetT = 0;
+    this.levels = emptyLevels();
+    if (attract) this.levels.drone = 2;
+    this.derived = derive(this.levels);
+    this.credits = this.creditsEarned = 0;
+    this.shieldRegenT = 0;
+    this.shopT = 0;
+    this.waitingShop = false;
+    this.drones.length = 0;
     this.score = 0;
     this.mult = this.maxMult = 1;
     this.kills = this.combo = this.comboT = 0;
@@ -268,7 +289,7 @@ export class World implements BossHost {
       this.dashDx = dx / l;
       this.dashDy = dy / l;
       this.dashT = PLAYER.dashTime;
-      this.dashCd = PLAYER.dashCooldown;
+      this.dashCd = PLAYER.dashCooldown * this.derived.dashCdMul;
       this.hooks.audio.play('dash');
       this.particles.ring(this.px, this.py, 24, C.Cyan, 320, 0.35);
     }
@@ -287,8 +308,9 @@ export class World implements BossHost {
       }
     } else {
       const k = damp(PLAYER.friction, dt);
-      this.pvx += (c.moveX * PLAYER.maxSpeed - this.pvx) * k;
-      this.pvy += (c.moveY * PLAYER.maxSpeed - this.pvy) * k;
+      const top = PLAYER.maxSpeed * this.derived.speedMul;
+      this.pvx += (c.moveX * top - this.pvx) * k;
+      this.pvy += (c.moveY * top - this.pvy) * k;
     }
 
     // Gravity wells tug at the ship.
@@ -328,8 +350,62 @@ export class World implements BossHost {
     // Weapons.
     this.fireCd -= dt;
     if (c.firing && this.fireCd <= 0) {
-      this.fireCd = PLAYER.fireInterval * (this.rapidT > 0 ? 0.5 : 1);
+      this.fireCd = PLAYER.fireInterval * this.derived.fireIntervalMul * (this.rapidT > 0 ? 0.5 : 1);
       this.fire(c.aim);
+    }
+
+    // Shield generator.
+    if (this.derived.shieldRegen > 0 && !this.shield) {
+      this.shieldRegenT += dt;
+      if (this.shieldRegenT >= this.derived.shieldRegen) {
+        this.shieldRegenT = 0;
+        this.shield = true;
+        this.particles.ring(this.px, this.py, 36, C.Cyan, 260, 0.4);
+        if (!this.attract) this.pushText(this.px, this.py - 36, t('shieldOnline'), C.Cyan, 16);
+      }
+    }
+
+    this.updateDrones(dt);
+  }
+
+  /** Orbiting wing drones: auto-target the nearest enemy in range. */
+  private updateDrones(dt: number): void {
+    const n = this.derived.drones;
+    while (this.drones.length < n) this.drones.push({ cd: Math.random() * 0.3, x: this.px, y: this.py });
+    this.drones.length = n;
+    for (let i = 0; i < n; i++) {
+      const d = this.drones[i]!;
+      const a = this.time * 2.4 + (i / n) * TAU;
+      const tx = this.px + Math.cos(a) * 46;
+      const ty = this.py + Math.sin(a) * 46;
+      d.x += (tx - d.x) * damp(18, dt);
+      d.y += (ty - d.y) * damp(18, dt);
+      d.cd -= dt;
+      if (d.cd > 0) continue;
+      let best: { x: number; y: number; vx: number; vy: number } | null = null;
+      let bd = 620 * 620;
+      for (const e of this.enemies) {
+        if (!e.active) continue;
+        const dd = (e.x - d.x) ** 2 + (e.y - d.y) ** 2;
+        if (dd < bd) (bd = dd), (best = e);
+      }
+      const boss = this.boss;
+      if (!best && boss?.vulnerable && (boss.x - d.x) ** 2 + (boss.y - d.y) ** 2 < 700 * 700) best = boss;
+      if (!best) continue;
+      d.cd = 0.34;
+      const lead = Math.sqrt(bd) / 1100;
+      const aim = Math.atan2(best.y + best.vy * lead - d.y, best.x + best.vx * lead - d.x);
+      const b = this.takeBullet(this.pBullets);
+      b.x = d.x;
+      b.y = d.y;
+      b.vx = Math.cos(aim) * 1100;
+      b.vy = Math.sin(aim) * 1100;
+      b.radius = 5;
+      b.life = 0.9;
+      b.damage = 0.6 * this.derived.damage;
+      b.color = C.Green;
+      b.pierce = 0;
+      this.particles.cone(d.x, d.y, aim, 0.5, 1, C.Green, 200, 0.12);
     }
   }
 
@@ -346,7 +422,7 @@ export class World implements BossHost {
       b.vy = Math.sin(a) * PLAYER.bulletSpeed + this.pvy * 0.3;
       b.radius = 6;
       b.life = 1.2;
-      b.damage = 1;
+      b.damage = this.derived.damage;
       b.color = this.rapidT > 0 ? C.Orange : C.Gold;
       b.pierce = this.weapon >= 5 ? 1 : 0;
     }
@@ -365,7 +441,15 @@ export class World implements BossHost {
   // ─────────────────────────────── waves ───────────────────────────────
 
   private updateWaves(dt: number): void {
-    if (this.dead) return;
+    if (this.dead || this.waitingShop) return;
+    if (this.shopT > 0) {
+      this.shopT -= dt;
+      if (this.shopT <= 0) {
+        this.waitingShop = true;
+        this.hooks.onShop(this.wave + 1);
+      }
+      return;
+    }
     if (this.intermission > 0) {
       this.intermission -= dt;
       if (this.intermission <= 0) this.startWave(this.wave + 1);
@@ -389,10 +473,48 @@ export class World implements BossHost {
     const allSpawned = this.groupIdx >= plan.groups.length;
     const lastAt = plan.groups.length ? plan.groups[plan.groups.length - 1]!.at : 0;
     if (plan.boss) {
-      if (allSpawned && !this.boss && this.bossDelay <= 0 && this.activeEnemyCount === 0) this.intermission = 2.5;
-    } else if (allSpawned && (this.activeEnemyCount === 0 || this.waveT > lastAt + 22)) {
-      this.intermission = this.activeEnemyCount === 0 ? 1.6 : 0.01;
+      if (allSpawned && !this.boss && this.bossDelay <= 0 && this.activeEnemyCount === 0) this.endWave(2.5);
+    } else if (allSpawned && this.activeEnemyCount === 0) {
+      this.endWave(1.6);
+    } else if (allSpawned && this.waveT > lastAt + 22 && !this.shopDue) {
+      // Stragglers don't stall the run — unless the shop is next, which needs a clear arena.
+      this.intermission = 0.01;
     }
+  }
+
+  private get shopDue(): boolean {
+    return !this.attract && shopAfterWave(this.wave);
+  }
+
+  private endWave(delay: number): void {
+    if (this.shopDue) {
+      // Vacuum up the remaining shards, then open the bay.
+      this.shopT = 2.2;
+      this.magnetT = Math.max(this.magnetT, 2.2);
+    } else {
+      this.intermission = delay;
+    }
+  }
+
+  /** Resume after the upgrade bay closes. */
+  closeShop(): void {
+    this.waitingShop = false;
+    this.intermission = 1.2;
+    this.invuln = Math.max(this.invuln, 1.5);
+  }
+
+  /** Attempt a purchase; returns false if unaffordable or maxed. */
+  buy(id: UpgradeId): boolean {
+    if (isMaxed(id, this.levels)) return false;
+    const price = cost(id, this.levels);
+    if (this.credits < price) return false;
+    this.credits -= price;
+    this.levels[id]++;
+    if (id === 'bomb') this.bombs = Math.min(9, this.bombs + 1);
+    if (id === 'repair') this.lives++;
+    if (id === 'shieldGen') this.shield = true; // first charge comes installed
+    if (!UPGRADES[id].consumable) this.derived = derive(this.levels);
+    return true;
   }
 
   private startWave(n: number): void {
@@ -1037,7 +1159,7 @@ export class World implements BossHost {
   }
 
   private updatePickups(dt: number): void {
-    const magnetR = this.magnetT > 0 ? 2000 : 150;
+    const magnetR = this.magnetT > 0 ? 2000 : this.derived.magnetRadius;
     for (const p of this.pickups) {
       if (!p.alive) continue;
       p.life -= dt;
@@ -1081,6 +1203,8 @@ export class World implements BossHost {
     const col = pickupColor(p.kind);
     if (p.kind === 'shard') {
       this.mult = Math.min(SCORE.maxMultiplier, this.mult + SCORE.multiplierPerShard);
+      this.credits += this.derived.creditsPerShard;
+      this.creditsEarned += this.derived.creditsPerShard;
       this.maxMult = Math.max(this.maxMult, this.mult);
       this.hooks.audio.play('pickup', 1 + Math.min(1.5, this.mult / 200));
       this.particles.burst(p.x, p.y, 3, C.Green, 120, 0.3);
@@ -1210,7 +1334,7 @@ export class World implements BossHost {
     this.boss?.draw(g, time);
 
     // Player bullets: streaks.
-    for (const col of [C.Gold, C.Orange]) {
+    for (const col of [C.Gold, C.Orange, C.Green]) {
       g.beginPath();
       for (const b of this.pBullets) {
         if (!b.alive || b.color !== col) continue;
@@ -1234,6 +1358,28 @@ export class World implements BossHost {
     // Player.
     if (!this.dead && !(this.invuln > 0 && !this.attract && Math.sin(time * 40) < 0)) {
       drawShip(g, this.px, this.py, this.pAngle, this.dashT > 0 ? C.White : C.Cyan);
+      for (const d of this.drones) {
+        g.save();
+        g.translate(d.x, d.y);
+        g.rotate(time * 5);
+        g.beginPath();
+        g.moveTo(0, -10);
+        g.lineTo(5, 0);
+        g.lineTo(0, 10);
+        g.lineTo(-5, 0);
+        g.closePath();
+        g.strokeStyle = rgb(C.Green, 0.25);
+        g.lineWidth = 7;
+        g.stroke();
+        g.strokeStyle = rgb(C.Green);
+        g.lineWidth = 2;
+        g.stroke();
+        g.beginPath();
+        g.arc(0, 0, 2.2, 0, TAU);
+        g.fillStyle = rgb(C.White);
+        g.fill();
+        g.restore();
+      }
       if (this.shield) {
         g.beginPath();
         g.arc(this.px, this.py, 28 + Math.sin(time * 8) * 2, 0, TAU);

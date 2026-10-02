@@ -28,7 +28,7 @@
         <div class="lang-switch" role="group" aria-label="Language">
           <button data-lang="en">EN</button><button data-lang="fr">FR</button>
         </div>
-        <p class="credits" data-i18n="credits"></p>
+        <p class="credits" data-i18n="creditsLine"></p>
       </section>
 
       <!-- How to play -->
@@ -45,6 +45,7 @@
         <p class="hint" data-i18n="touchHint"></p>
         <ul class="tips">
           <li data-i18n="tipShards"></li>
+          <li data-i18n="shopAfter"></li>
           <li data-i18n="tipBoss"></li>
         </ul>
         <div class="legend" id="legend"></div>
@@ -67,6 +68,24 @@
           <label class="check"><span data-i18n="showFps"></span><input type="checkbox" name="fps" /></label>
         </form>
         <button class="btn" data-action="back" data-i18n="back"></button>
+      </section>
+
+      <!-- Upgrade bay -->
+      <section class="screen dim shop" id="screen-shop" data-screen="shop" hidden>
+        <header class="shop-head">
+          <h2 data-i18n="shopTitle"></h2>
+          <p class="tagline" data-i18n="shopSub"></p>
+          <div class="wallet" aria-live="polite">◆ <strong id="shop-credits">0</strong> <span data-i18n="credits"></span></div>
+        </header>
+        <h3 class="shop-label" data-i18n="upgradesLabel"></h3>
+        <div class="offers" id="shop-offers"></div>
+        <h3 class="shop-label" data-i18n="consumables"></h3>
+        <div class="offers supplies" id="shop-supplies"></div>
+        <div class="owned" id="shop-owned"></div>
+        <div class="shop-actions">
+          <button class="btn" id="shop-reroll"></button>
+          <button class="btn primary" id="shop-continue"></button>
+        </div>
       </section>
 
       <!-- Pause -->

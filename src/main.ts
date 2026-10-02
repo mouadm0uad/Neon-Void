@@ -13,9 +13,11 @@ import { drawHud } from './game/hud';
 import { detectLang, setLang, t, type I18nKey, type Lang } from './game/i18n';
 import { drawEnemy } from './game/shapes';
 import { World, type Controls, type RunStats } from './game/world';
+import { MenuNav } from './ui/menuNav';
+import { ShopUI } from './ui/shop';
 
-type State = 'title' | 'playing' | 'paused' | 'over';
-type Screen = 'title' | 'howto' | 'settings' | 'pause' | 'over' | null;
+type State = 'title' | 'playing' | 'paused' | 'over' | 'shop';
+type Screen = 'title' | 'howto' | 'settings' | 'pause' | 'over' | 'shop' | null;
 
 interface Settings {
   lang: Lang;
@@ -46,15 +48,29 @@ const audio = new AudioEngine();
 let state: State = 'title';
 let screen: Screen = 'title';
 let returnScreen: Screen = 'title';
-let overAt = 0;
 
 const world = new World({
   audio,
   renderer,
   shakeScale: () => settings.shake,
   onGameOver: (s) => onGameOver(s),
+  onShop: (n) => openShop(n),
 });
 world.reset(true);
+const shop = new ShopUI($('#screen-shop'), world, audio);
+const nav = new MenuNav(() => (screen ? document.querySelector<HTMLElement>(`[data-screen="${screen}"]`) : null));
+
+function openShop(nextWave: number): void {
+  state = 'shop';
+  shop.open(nextWave, () => {
+    world.closeShop();
+    state = 'playing';
+    show(null);
+  });
+  show('shop');
+  // Land focus on the first card so keyboard/gamepad users can shop instantly.
+  if (input.state.device !== 'touch') document.querySelector<HTMLElement>('#shop-offers .card:not([disabled])')?.focus({ preventScroll: true });
+}
 
 // ───────────────────────────── settings & i18n ─────────────────────────────
 
@@ -79,6 +95,7 @@ function applySettings(): void {
   (form.elements.namedItem('fps') as HTMLInputElement).checked = settings.fps;
   $('#best-score').textContent = best.toLocaleString();
   buildLegend();
+  shop.refresh();
   save('settings', settings);
 }
 
@@ -192,7 +209,6 @@ function toTitle(): void {
 function onGameOver(s: RunStats): void {
   if (world.attract) return;
   state = 'over';
-  overAt = performance.now();
   const record = s.score > best;
   if (record) {
     best = s.score;
@@ -283,12 +299,11 @@ const idle: Controls = { moveX: 0, moveY: 0, aim: 0, firing: false, bomb: false,
 const loop = new GameLoop({
   update(dt) {
     input.poll();
+    if (screen) nav.poll(dt);
     const s = input.state;
     switch (state) {
       case 'title':
         world.update(dt, world.aiControls());
-        // Gamepad: any face button on the title starts a run.
-        if (s.device === 'gamepad' && (s.dash || s.bomb || s.pause) && screen === 'title') startGame();
         break;
       case 'playing':
         if (s.pause) {
@@ -296,14 +311,15 @@ const loop = new GameLoop({
           break;
         }
         world.update(dt, playerControls());
-        if (input.state.device === 'touch') $('#touch-buttons').hidden = false;
+        if (state === 'playing' && input.state.device === 'touch') $('#touch-buttons').hidden = false;
         break;
       case 'paused':
         if (s.pause && screen === 'pause') resume();
         break;
+      case 'shop':
+        break;
       case 'over':
         world.update(dt, idle);
-        if (s.device === 'gamepad' && (s.dash || s.bomb) && performance.now() - overAt > 800) startGame();
         break;
     }
   },

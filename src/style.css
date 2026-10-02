@@ -214,3 +214,94 @@ h2 {
 @media (prefers-reduced-motion: reduce) {
   .logo span:last-child, .record { animation: none; }
 }
+
+/* ───────────── Upgrade bay ───────────── */
+.shop { justify-content: flex-start; gap: 14px; padding-block: max(28px, env(safe-area-inset-top)) 28px; }
+.shop-head { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.wallet {
+  font-family: var(--display);
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 200, 40, 0.4);
+  border-radius: 4px;
+  background: rgba(255, 200, 40, 0.07);
+}
+.wallet strong { font-size: 20px; text-shadow: 0 0 12px rgba(255, 200, 40, 0.7); }
+.wallet.shake { animation: shake 0.35s; }
+@keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+
+.shop-label {
+  margin: 6px 0 -4px;
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.offers { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; width: min(920px, 100%); }
+.offers.supplies { grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(460px, 100%); }
+.offers.rolled .card { animation: dealIn 0.35s ease-out backwards; }
+.offers.rolled .card:nth-child(2) { animation-delay: 0.05s; }
+.offers.rolled .card:nth-child(3) { animation-delay: 0.1s; }
+.offers.rolled .card:nth-child(4) { animation-delay: 0.15s; }
+@keyframes dealIn { from { opacity: 0; transform: translateY(14px) rotateX(40deg); } }
+@media (max-width: 760px) { .offers { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.card {
+  --c: var(--cyan);
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto auto;
+  justify-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 16px 12px 12px;
+  font: inherit;
+  color: var(--text);
+  text-align: center;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c) 12%, transparent), rgba(10, 8, 30, 0.75));
+  border: 1.5px solid color-mix(in srgb, var(--c) 45%, transparent);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.15s, border-color 0.15s;
+}
+.card:hover:not([disabled]), .card:focus-visible {
+  outline: none;
+  transform: translateY(-3px);
+  border-color: var(--c);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--c) 45%, transparent), inset 0 0 16px color-mix(in srgb, var(--c) 18%, transparent);
+}
+.card:active:not([disabled]) { transform: scale(0.97); }
+.card[disabled] { cursor: default; opacity: 0.45; }
+.card.poor .price { color: #ff6a6a; }
+.card.poor { filter: saturate(0.6); }
+.card.bought { animation: bought 0.45s ease-out; }
+@keyframes bought { 0% { box-shadow: 0 0 0 0 var(--c); } 40% { box-shadow: 0 0 40px 6px var(--c); } 100% { box-shadow: none; } }
+.card .glyph { font-size: 28px; line-height: 1; color: var(--c); text-shadow: 0 0 14px var(--c); }
+.card .name { font-family: var(--display); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; text-wrap: balance; }
+.card .desc { font-size: 13px; color: var(--muted); line-height: 1.35; }
+.card .pips { display: flex; gap: 4px; }
+.card .pips i { width: 14px; height: 4px; border-radius: 1px; background: rgba(255, 255, 255, 0.15); }
+.card .pips i.on { background: var(--c); box-shadow: 0 0 6px var(--c); }
+.card .lv { font-family: var(--display); font-size: 11px; color: var(--muted); min-height: 4px; }
+.card .price { font-family: var(--display); font-weight: 700; font-size: 15px; color: var(--gold); font-variant-numeric: tabular-nums; }
+
+.owned { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 920px; min-height: 0; }
+.owned:empty { display: none; }
+.chip {
+  font-family: var(--display);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 3px;
+  color: var(--c);
+  border: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
+}
+.shop-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 4px; }
+.shop-actions .btn { min-width: 220px; }
+.btn.poor { opacity: 0.55; }
