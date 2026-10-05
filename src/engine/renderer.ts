@@ -122,9 +122,11 @@ export class Renderer {
 
   /** Viewport scale so the visible play area is roughly 1280×800 world units. */
   get worldScale(): number {
-    let s = Math.min(this.width / 1280, this.height / 800);
+    const w = Math.max(1, this.width);
+    const h = Math.max(1, this.height);
+    let s = Math.min(w / 1280, h / 800);
     // Portrait phones: zoom in so the ship isn't microscopic.
-    if (this.height > this.width) s = Math.max(s, this.width / 640, this.height / 1300);
+    if (h > w) s = Math.max(s, w / 640, h / 1300);
     return s * this.camera.zoom;
   }
 

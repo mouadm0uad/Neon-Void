@@ -11,7 +11,7 @@ import { Boss, type BossHost } from './boss';
 import { BG, C, HALF_H, HALF_W, PLAYER, SCORE, rgb } from './config';
 import { Bullet, ENEMY_DEFS, Enemy, Pickup, type EnemyKind, type FloatText, type PickupKind } from './entities';
 import { WarpGrid } from './grid';
-import { t } from './i18n';
+import { fmt, t } from './i18n';
 import { Particles, type Attractor } from './particles';
 import { drawEnemy, drawPickup, drawShip, pickupColor } from './shapes';
 import { planWave, type SpawnGroup, type WavePlan } from './waves';
@@ -65,11 +65,37 @@ export interface Banner {
 
 const WEAPON_PATTERNS: readonly (readonly [angle: number, offset: number])[][] = [
   [],
-  [[0, -6], [0, 6]],
-  [[-0.08, 0], [0, 0], [0.08, 0]],
-  [[-0.14, 0], [-0.045, -5], [0.045, 5], [0.14, 0]],
-  [[-0.2, 0], [-0.1, 0], [0, 0], [0.1, 0], [0.2, 0]],
-  [[-0.5, 0], [-0.2, 0], [-0.1, 0], [0, 0], [0.1, 0], [0.2, 0], [0.5, 0]],
+  [
+    [0, -6],
+    [0, 6],
+  ],
+  [
+    [-0.08, 0],
+    [0, 0],
+    [0.08, 0],
+  ],
+  [
+    [-0.14, 0],
+    [-0.045, -5],
+    [0.045, 5],
+    [0.14, 0],
+  ],
+  [
+    [-0.2, 0],
+    [-0.1, 0],
+    [0, 0],
+    [0.1, 0],
+    [0.2, 0],
+  ],
+  [
+    [-0.5, 0],
+    [-0.2, 0],
+    [-0.1, 0],
+    [0, 0],
+    [0.1, 0],
+    [0.2, 0],
+    [0.5, 0],
+  ],
 ];
 
 export class World implements BossHost {
@@ -317,7 +343,17 @@ export class World implements BossHost {
       this.pvy = this.dashDy * PLAYER.dashSpeed;
       // After-image sparks.
       for (let i = 0; i < 3; i++) {
-        this.particles.spawn(this.px + (Math.random() - 0.5) * 10, this.py + (Math.random() - 0.5) * 10, -this.pvx * 0.1, -this.pvy * 0.1, 0.35, C.Cyan, 3, 0.05, 4);
+        this.particles.spawn(
+          this.px + (Math.random() - 0.5) * 10,
+          this.py + (Math.random() - 0.5) * 10,
+          -this.pvx * 0.1,
+          -this.pvy * 0.1,
+          0.35,
+          C.Cyan,
+          3,
+          0.05,
+          4,
+        );
       }
       if (this.dashT <= 0) {
         this.pvx *= 0.35;
@@ -347,10 +383,22 @@ export class World implements BossHost {
     this.px += this.pvx * dt;
     this.py += this.pvy * dt;
     const R = PLAYER.radius;
-    if (this.px < -HALF_W + R) (this.px = -HALF_W + R), (this.pvx = 0);
-    if (this.px > HALF_W - R) (this.px = HALF_W - R), (this.pvx = 0);
-    if (this.py < -HALF_H + R) (this.py = -HALF_H + R), (this.pvy = 0);
-    if (this.py > HALF_H - R) (this.py = HALF_H - R), (this.pvy = 0);
+    if (this.px < -HALF_W + R) {
+      this.px = -HALF_W + R;
+      this.pvx = 0;
+    }
+    if (this.px > HALF_W - R) {
+      this.px = HALF_W - R;
+      this.pvx = 0;
+    }
+    if (this.py < -HALF_H + R) {
+      this.py = -HALF_H + R;
+      this.pvy = 0;
+    }
+    if (this.py > HALF_H - R) {
+      this.py = HALF_H - R;
+      this.pvy = 0;
+    }
 
     // Facing: aim when firing, otherwise heading.
     const speed = len(this.pvx, this.pvy);
@@ -360,7 +408,16 @@ export class World implements BossHost {
     // Engine exhaust + grid wake.
     if (speed > 60) {
       const back = Math.atan2(-this.pvy, -this.pvx);
-      this.particles.cone(this.px - (this.pvx / speed) * 12, this.py - (this.pvy / speed) * 12, back, 0.5, 1, Math.random() < 0.6 ? C.Orange : C.Gold, 260, 0.35);
+      this.particles.cone(
+        this.px - (this.pvx / speed) * 12,
+        this.py - (this.pvy / speed) * 12,
+        back,
+        0.5,
+        1,
+        Math.random() < 0.6 ? C.Orange : C.Gold,
+        260,
+        0.35,
+      );
       this.grid.applyDirected(this.px, this.py, this.pvx * 0.0016, this.pvy * 0.0016, 70);
     }
 
@@ -405,7 +462,10 @@ export class World implements BossHost {
       for (const e of this.enemies) {
         if (!e.active) continue;
         const dd = (e.x - d.x) ** 2 + (e.y - d.y) ** 2;
-        if (dd < bd) (bd = dd), (best = e);
+        if (dd < bd) {
+          bd = dd;
+          best = e;
+        }
       }
       const boss = this.boss;
       if (!best && boss?.vulnerable && (boss.x - d.x) ** 2 + (boss.y - d.y) ** 2 < 700 * 700) best = boss;
@@ -498,6 +558,7 @@ export class World implements BossHost {
     } else if (allSpawned && this.waveT > lastAt + 22 && !this.shopDue) {
       // Stragglers don't stall the run — unless the shop is next, which needs a clear arena.
       this.intermission = 0.01;
+      this.hitThisWave = false;
     }
   }
 
@@ -510,9 +571,10 @@ export class World implements BossHost {
       // Wave-clear bonus (flat, not multiplied) — doubled if you weren't hit.
       const bonus = 500 * this.wave * (this.hitThisWave ? 1 : 2);
       this.score += bonus;
+      this.checkExtraLife();
       this.banner = {
         text: t('waveCleared', { n: this.wave }),
-        sub: `${this.hitThisWave ? t('bonus') : t('flawless')} +${bonus.toLocaleString()}`,
+        sub: `${this.hitThisWave ? t('bonus') : t('flawless')} +${fmt(bonus)}`,
         t: 0,
         color: this.hitThisWave ? C.Green : C.Gold,
       };
@@ -520,7 +582,8 @@ export class World implements BossHost {
     }
     this.hitThisWave = false;
     if (this.shopDue) {
-      // Vacuum up the remaining shards, then open the bay.
+      // Vacuum up the remaining shards, clear stray shots, then open the bay.
+      this.clearEnemyBullets(true);
       this.shopT = 2.2;
       this.magnetT = Math.max(this.magnetT, 2.2);
     } else {
@@ -836,10 +899,26 @@ export class World implements BossHost {
       e.x += e.vx * dt;
       e.y += e.vy * dt;
       const R = e.radius;
-      if (e.x < -HALF_W + R) (e.x = -HALF_W + R), (e.vx = Math.abs(e.vx)), (e.wanderAngle = Math.PI - e.wanderAngle);
-      if (e.x > HALF_W - R) (e.x = HALF_W - R), (e.vx = -Math.abs(e.vx)), (e.wanderAngle = Math.PI - e.wanderAngle);
-      if (e.y < -HALF_H + R) (e.y = -HALF_H + R), (e.vy = Math.abs(e.vy)), (e.wanderAngle = -e.wanderAngle);
-      if (e.y > HALF_H - R) (e.y = HALF_H - R), (e.vy = -Math.abs(e.vy)), (e.wanderAngle = -e.wanderAngle);
+      if (e.x < -HALF_W + R) {
+        e.x = -HALF_W + R;
+        e.vx = Math.abs(e.vx);
+        e.wanderAngle = Math.PI - e.wanderAngle;
+      }
+      if (e.x > HALF_W - R) {
+        e.x = HALF_W - R;
+        e.vx = -Math.abs(e.vx);
+        e.wanderAngle = Math.PI - e.wanderAngle;
+      }
+      if (e.y < -HALF_H + R) {
+        e.y = -HALF_H + R;
+        e.vy = Math.abs(e.vy);
+        e.wanderAngle = -e.wanderAngle;
+      }
+      if (e.y > HALF_H - R) {
+        e.y = HALF_H - R;
+        e.vy = -Math.abs(e.vy);
+        e.wanderAngle = -e.wanderAngle;
+      }
 
       // Contact with player.
       if (!this.dead && this.canBeHit() && Math.hypot(e.x - px, e.y - py) < e.radius + PLAYER.radius - 3) {
@@ -874,6 +953,8 @@ export class World implements BossHost {
   private updateBoss(dt: number): void {
     const b = this.boss;
     if (!b) return;
+    // Once the run is over the boss falls silent (no firing over the Game Over screen).
+    if (this.dead && b.mode !== 'dying') return;
     b.update(dt, this, this.px, this.py);
     if (b.dangerous && !this.dead && this.canBeHit() && Math.hypot(b.x - this.px, b.y - this.py) < b.radius + PLAYER.radius) {
       this.playerHit();
@@ -884,7 +965,8 @@ export class World implements BossHost {
       // Flat reward plus a multiplier bonus, so bosses matter without dwarfing the run.
       const pts = 25000 * b.tier + this.mult * 1000;
       this.score += pts;
-      this.pushText(b.x, b.y, `+${pts.toLocaleString()}`, C.Gold, 34);
+      this.checkExtraLife();
+      this.pushText(b.x, b.y, `+${fmt(pts)}`, C.Gold, 34);
       this.particles.burst(b.x, b.y, 900, C.Gold, 1400, 2, 3);
       this.particles.burst(b.x, b.y, 500, C.Magenta, 900, 1.6, 2);
       this.particles.ring(b.x, b.y, 160, C.White, 1100, 0.9);
@@ -953,15 +1035,7 @@ export class World implements BossHost {
         this.particles.cone(b.x, b.y, Math.atan2(-b.vy, -b.vx), 1.2, 3, C.Gold, 300, 0.3);
         this.snd('hit', b.x, { pitch: 0.7 });
         this.score += 5 * this.mult;
-        if (phaseChanged && boss.mode !== 'dying') {
-          this.shake(0.5);
-          this.grid.applyExplosive(boss.x, boss.y, 12, 600);
-          this.clearEnemyBullets(true);
-          this.hooks.renderer.flash = 0.6;
-          this.hooks.renderer.flashColor = '255,80,160';
-          this.snd('bossPhase', boss.x);
-          this.particles.ring(boss.x, boss.y, 120, C.Magenta, 900, 0.8);
-        }
+        if (phaseChanged && boss.mode !== 'dying') this.bossPhaseFx(boss);
       }
     }
 
@@ -985,6 +1059,16 @@ export class World implements BossHost {
         }
       }
     }
+  }
+
+  private bossPhaseFx(boss: Boss): void {
+    this.shake(0.5);
+    this.grid.applyExplosive(boss.x, boss.y, 12, 600);
+    this.clearEnemyBullets(true);
+    this.hooks.renderer.flash = 0.6;
+    this.hooks.renderer.flashColor = '255,80,160';
+    this.snd('bossPhase', boss.x);
+    this.particles.ring(boss.x, boss.y, 120, C.Magenta, 900, 0.8);
   }
 
   private damageEnemy(e: Enemy, dmg: number, b: Bullet): void {
@@ -1012,7 +1096,10 @@ export class World implements BossHost {
     if (dir !== undefined) this.particles.cone(e.x, e.y, dir, 0.7, 14, def.color, 700, 0.6);
     this.grid.applyExplosive(e.x, e.y, big ? 4 : 2, big ? 260 : 150);
     const size = e.kind === 'mini' ? 1.5 : big ? 0.75 : 1.05;
-    this.snd(e.kind === 'well' ? 'bigExplode' : 'explode', e.x, { pitch: size * (0.9 + Math.random() * 0.2), vol: e.kind === 'mini' ? 0.6 : 1 });
+    this.snd(e.kind === 'well' ? 'bigExplode' : 'explode', e.x, {
+      pitch: size * (0.9 + Math.random() * 0.2),
+      vol: e.kind === 'mini' ? 0.6 : 1,
+    });
     this.shake(e.kind === 'well' ? 0.45 : 0.08);
 
     if (e.kind === 'splitter') {
@@ -1050,8 +1137,12 @@ export class World implements BossHost {
   private addScore(base: number, x: number, y: number, popup: boolean): void {
     const pts = base * this.mult;
     this.score += pts;
-    if (popup) this.pushText(x, y, pts.toLocaleString(), C.Gold, 18);
-    if (!this.attract && this.score >= this.extraLifeAt) {
+    if (popup) this.pushText(x, y, fmt(pts), C.Gold, 18);
+    this.checkExtraLife();
+  }
+
+  private checkExtraLife(): void {
+    if (!this.attract && !this.dead && this.score >= this.extraLifeAt) {
       this.extraLifeAt += 150000;
       this.lives++;
       this.snd('extraLife');
@@ -1134,7 +1225,8 @@ export class World implements BossHost {
     this.shake(0.8);
     this.snd('bomb');
     this.invuln = Math.max(this.invuln, 0.6);
-    if (this.boss?.vulnerable) this.boss.damage(30);
+    const boss = this.boss;
+    if (boss?.vulnerable && boss.damage(30) && boss.mode !== 'dying') this.bossPhaseFx(boss);
   }
 
   private updateShockwaves(dt: number): void {
@@ -1219,7 +1311,10 @@ export class World implements BossHost {
         p.vy += (dy / d) * pull * dt * 4;
         const sp = Math.hypot(p.vx, p.vy);
         const max = this.magnetT > 0 ? 1300 : 800;
-        if (sp > max) (p.vx *= max / sp), (p.vy *= max / sp);
+        if (sp > max) {
+          p.vx *= max / sp;
+          p.vy *= max / sp;
+        }
       } else {
         const k = Math.exp(-(p.kind === 'shard' ? 3 : 0.5) * dt);
         p.vx *= k;
@@ -1227,8 +1322,14 @@ export class World implements BossHost {
       }
       p.x += p.vx * dt;
       p.y += p.vy * dt;
-      if (Math.abs(p.x) > HALF_W - 8) (p.vx *= -1), (p.x = clamp(p.x, -HALF_W + 8, HALF_W - 8));
-      if (Math.abs(p.y) > HALF_H - 8) (p.vy *= -1), (p.y = clamp(p.y, -HALF_H + 8, HALF_H - 8));
+      if (Math.abs(p.x) > HALF_W - 8) {
+        p.vx *= -1;
+        p.x = clamp(p.x, -HALF_W + 8, HALF_W - 8);
+      }
+      if (Math.abs(p.y) > HALF_H - 8) {
+        p.vy *= -1;
+        p.y = clamp(p.y, -HALF_H + 8, HALF_H - 8);
+      }
 
       if (!this.dead && d < PLAYER.radius + p.radius) {
         p.alive = false;
@@ -1448,7 +1549,7 @@ export class World implements BossHost {
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     for (const tx of this.texts) {
-      const a = Math.min(1, tx.life / tx.maxLife * 2);
+      const a = Math.min(1, (tx.life / tx.maxLife) * 2);
       g.font = `700 ${tx.size}px Orbitron, system-ui, sans-serif`;
       g.fillStyle = rgb(tx.color, a);
       g.fillText(tx.text, tx.x, tx.y);

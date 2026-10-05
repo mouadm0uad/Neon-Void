@@ -2,6 +2,15 @@
  * App shell: wires engine + world + DOM menus together and runs the state
  * machine  title → playing ⇄ paused → over → (playing | title).
  */
+// Self-hosted fonts (bundled by Vite — no third-party requests, works offline).
+import '@fontsource/orbitron/latin-500.css';
+import '@fontsource/orbitron/latin-600.css';
+import '@fontsource/orbitron/latin-700.css';
+import '@fontsource/orbitron/latin-800.css';
+import '@fontsource/orbitron/latin-900.css';
+import '@fontsource/inter/latin-400.css';
+import '@fontsource/inter/latin-500.css';
+import '@fontsource/inter/latin-600.css';
 import './style.css';
 import { ALL_SFX, AudioEngine } from './engine/audio';
 import { Input } from './engine/input';
@@ -10,7 +19,7 @@ import { Renderer, type BloomQuality } from './engine/renderer';
 import { load, save } from './engine/storage';
 import { Enemy, type EnemyKind } from './game/entities';
 import { drawHud } from './game/hud';
-import { detectLang, setLang, t, type I18nKey, type Lang } from './game/i18n';
+import { detectLang, fmt, setLang, t, type I18nKey, type Lang } from './game/i18n';
 import { drawEnemy } from './game/shapes';
 import { World, type Controls, type RunStats } from './game/world';
 import { MenuNav } from './ui/menuNav';
@@ -73,7 +82,8 @@ function openShop(nextWave: number): void {
   });
   show('shop');
   // Land focus on the first card so keyboard/gamepad users can shop instantly.
-  if (input.state.device !== 'touch') document.querySelector<HTMLElement>('#shop-offers .card:not([disabled])')?.focus({ preventScroll: true });
+  if (input.state.device !== 'touch')
+    document.querySelector<HTMLElement>('#shop-offers .card:not([disabled])')?.focus({ preventScroll: true });
 }
 
 // ───────────────────────────── settings & i18n ─────────────────────────────
@@ -97,13 +107,14 @@ function applySettings(): void {
   (form.elements.namedItem('bloom') as HTMLSelectElement).value = settings.bloom;
   (form.elements.namedItem('shake') as HTMLInputElement).value = String(settings.shake);
   (form.elements.namedItem('fps') as HTMLInputElement).checked = settings.fps;
-  $('#best-score').textContent = best.toLocaleString();
+  $('#best-score').textContent = fmt(best);
   buildLegend();
   shop.refresh();
   setMuted(settings.muted);
   save('settings', settings);
 }
 
+$<HTMLFormElement>('#settings-form').addEventListener('submit', (e) => e.preventDefault());
 $<HTMLFormElement>('#settings-form').addEventListener('input', (e) => {
   const el = e.target as HTMLInputElement;
   switch (el.name) {
@@ -145,8 +156,24 @@ function buildLegend(): void {
   host.innerHTML = '';
   const kinds: EnemyKind[] = ['drifter', 'seeker', 'splitter', 'dart', 'gunner', 'well'];
   const names: Record<Lang, Record<EnemyKind, string>> = {
-    en: { drifter: 'Drifter', seeker: 'Seeker', splitter: 'Splitter', mini: 'Shard', dart: 'Dodger', gunner: 'Gunner', well: 'Singularity' },
-    fr: { drifter: 'Rôdeur', seeker: 'Traqueur', splitter: 'Diviseur', mini: 'Éclat', dart: 'Esquiveur', gunner: 'Artilleur', well: 'Singularité' },
+    en: {
+      drifter: 'Drifter',
+      seeker: 'Seeker',
+      splitter: 'Splitter',
+      mini: 'Shard',
+      dart: 'Dodger',
+      gunner: 'Gunner',
+      well: 'Singularity',
+    },
+    fr: {
+      drifter: 'Rôdeur',
+      seeker: 'Traqueur',
+      splitter: 'Diviseur',
+      mini: 'Éclat',
+      dart: 'Esquiveur',
+      gunner: 'Artilleur',
+      well: 'Singularité',
+    },
   };
   for (const k of kinds) {
     const fig = document.createElement('figure');
@@ -224,17 +251,19 @@ function onGameOver(s: RunStats): void {
     save('best', best);
   }
   $('#new-record').hidden = !record;
-  $('#final-score').textContent = s.score.toLocaleString();
+  $('#final-score').textContent = fmt(s.score);
   const mm = Math.floor(s.time / 60);
-  const ss = Math.floor(s.time % 60).toString().padStart(2, '0');
+  const ss = Math.floor(s.time % 60)
+    .toString()
+    .padStart(2, '0');
   const rows: [I18nKey, string][] = [
     ['waveReached', String(s.wave)],
-    ['kills', s.kills.toLocaleString()],
+    ['kills', fmt(s.kills)],
     ['maxMult', `×${s.maxMult}`],
     ['time', `${mm}:${ss}`],
   ];
   $('#stats').innerHTML = rows.map(([k, v]) => `<div><dt>${t(k)}</dt><dd>${v}</dd></div>`).join('');
-  $('#best-score').textContent = best.toLocaleString();
+  $('#best-score').textContent = fmt(best);
   show('over');
 }
 
@@ -283,7 +312,7 @@ input.onGesture = () => {
   audio.unlock();
 };
 // Any first interaction anywhere (menus included) wakes the audio, so the title theme plays.
-for (const ev of ['pointerdown', 'keydown', 'touchstart'] as const) {
+for (const ev of ['pointerdown', 'pointerup', 'keydown', 'touchstart', 'touchend', 'click'] as const) {
   window.addEventListener(ev, () => audio.unlock(), { capture: true, passive: true });
 }
 
@@ -303,7 +332,7 @@ function setMuted(m: boolean): void {
   save('settings', settings);
 }
 window.addEventListener('keydown', (e) => {
-  if (e.code === 'KeyM' && !e.repeat) {
+  if (e.key.toLowerCase() === 'm' && !e.repeat && !e.ctrlKey && !e.metaKey) {
     audio.unlock();
     setMuted(!settings.muted);
   }
@@ -322,7 +351,9 @@ document.addEventListener('visibilitychange', () => {
 function playerControls(): Controls {
   const s = input.state;
   let aim: number;
-  if (s.device === 'keyboard') {
+  if (s.device === 'keyboard' && !s.mouseSeen) {
+    aim = world.pAngle; // keyboard-only: fire where the ship faces
+  } else if (s.device === 'keyboard') {
     const m = renderer.screenToWorld(s.mouseX, s.mouseY);
     aim = Math.atan2(m.y - world.py, m.x - world.px);
   } else {
@@ -336,11 +367,15 @@ const idle: Controls = { moveX: 0, moveY: 0, aim: 0, firing: false, bomb: false,
 const loop = new GameLoop({
   update(dt) {
     input.poll();
-    if (screen) nav.poll(dt);
+    // A menu press (A on Resume, B to go back…) must not also dash/bomb this tick.
+    const before = state;
+    nav.poll(dt);
+    if (state !== before) return;
     const s = input.state;
     switch (state) {
       case 'title':
         world.update(dt, world.aiControls());
+        if (s.pause && (screen === 'settings' || screen === 'howto')) show('title');
         break;
       case 'playing':
         if (s.pause) {
@@ -349,10 +384,12 @@ const loop = new GameLoop({
         }
         world.update(dt, playerControls());
         if (state === 'playing') audio.setSong(world.boss ? 'boss' : 'game');
-        if (state === 'playing' && input.state.device === 'touch') $('#touch-buttons').hidden = false;
+        if (state === 'playing') $('#touch-buttons').hidden = input.state.device !== 'touch';
         break;
       case 'paused':
         if (s.pause && screen === 'pause') resume();
+        // Esc / Start on Settings or How-to opened from pause goes back to the pause menu.
+        else if (s.pause && screen !== 'pause') show('pause');
         break;
       case 'shop':
         break;
@@ -373,6 +410,10 @@ const loop = new GameLoop({
     });
   },
 });
+
+// Canvas text can't wait for CSS: preload the HUD faces explicitly.
+void document.fonts?.load('700 16px Orbitron').catch(() => undefined);
+void document.fonts?.load('800 30px Orbitron').catch(() => undefined);
 
 applySettings();
 setMuted(settings.muted);

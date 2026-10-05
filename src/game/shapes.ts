@@ -32,15 +32,7 @@ function regular(g: CanvasRenderingContext2D, sides: number, r: number, rot = 0)
   g.closePath();
 }
 
-export function drawShip(
-  g: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  angle: number,
-  color: number,
-  alpha = 1,
-  scale = 1,
-): void {
+export function drawShip(g: CanvasRenderingContext2D, x: number, y: number, angle: number, color: number, alpha = 1, scale = 1): void {
   g.save();
   g.translate(x, y);
   g.rotate(angle);

@@ -95,12 +95,7 @@ export class WarpGrid {
     });
   }
 
-  private forEachInRadius(
-    x: number,
-    y: number,
-    radius: number,
-    fn: (i: number, dx: number, dy: number, d2: number) => void,
-  ): void {
+  private forEachInRadius(x: number, y: number, radius: number, fn: (i: number, dx: number, dy: number, d2: number) => void): void {
     const sw = (HALF_W * 2) / (this.cols - 1);
     const sh = (HALF_H * 2) / (this.rows - 1);
     const c0 = Math.max(1, Math.floor((x - radius + HALF_W) / sw));

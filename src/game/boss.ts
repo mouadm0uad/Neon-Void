@@ -144,8 +144,8 @@ export class Boss {
     // ── Fight: drift around, keep a respectful distance from the player.
     const tx = Math.cos(this.age * 0.25) * HALF_W * 0.45;
     const ty = Math.sin(this.age * 0.33) * HALF_H * 0.4;
-    const mx = (tx * 0.6 + px * 0.4) - this.x;
-    const my = (ty * 0.6 + py * 0.4) - this.y;
+    const mx = tx * 0.6 + px * 0.4 - this.x;
+    const my = ty * 0.6 + py * 0.4 - this.y;
     const ml = Math.hypot(mx, my) || 1;
     const sp = phase === 1 ? 70 : phase === 2 ? 110 : 140;
     this.vx += ((mx / ml) * sp - this.vx) * damp(2, dt);

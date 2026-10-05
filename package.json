@@ -7,14 +7,49 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "build:single": "node scripts/build-standalone.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm test"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9",
     "typescript": "^5.6.0",
+    "typescript-eslint": "^8.71.0",
     "vite": "^5.4.0",
     "vitest": "^2.1.0"
-  }
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/orbitron": "^5.3.0"
+  },
+  "keywords": [
+    "game",
+    "html5-game",
+    "canvas",
+    "webaudio",
+    "typescript",
+    "twin-stick-shooter",
+    "procedural-audio",
+    "vite",
+    "gamedev"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "homepage": "https://YOUR-USERNAME.github.io/neon-void/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR-USERNAME/neon-void.git"
+  },
+  "author": "YOUR NAME",
+  "private": true
 }

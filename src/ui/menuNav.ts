@@ -20,7 +20,12 @@ export class MenuNav {
       if (!d || !screen) return;
       // Let range sliders and selects keep their own arrow behaviour horizontally.
       const el = document.activeElement as HTMLElement | null;
-      if (el && (el.tagName === 'SELECT' || (el instanceof HTMLInputElement && el.type === 'range')) && (d === 'left' || d === 'right' || el.tagName === 'SELECT')) return;
+      if (
+        el &&
+        (el.tagName === 'SELECT' || (el instanceof HTMLInputElement && el.type === 'range')) &&
+        (d === 'left' || d === 'right' || el.tagName === 'SELECT')
+      )
+        return;
       e.preventDefault();
       this.move(d);
     });
@@ -31,7 +36,12 @@ export class MenuNav {
     const screen = this.activeScreen();
     const pads = typeof navigator.getGamepads === 'function' ? navigator.getGamepads() : [];
     const pad = Array.from(pads).find((p) => p && p.connected);
-    if (!pad || !screen) return;
+    if (!screen) {
+      // Forget the last menu so reopening the same screen re-snapshots held buttons.
+      this.lastScreen = null;
+      return;
+    }
+    if (!pad) return;
     if (screen !== this.lastScreen) {
       // New menu: adopt current button state so a held button doesn't click through.
       this.lastScreen = screen;
@@ -130,7 +140,10 @@ export class MenuNav {
       const cross = d === 'left' || d === 'right' ? Math.abs(dy) : Math.abs(dx);
       if (main <= 4) continue;
       const score = main + cross * 2.5;
-      if (score < bestScore) (bestScore = score), (best = el);
+      if (score < bestScore) {
+        bestScore = score;
+        best = el;
+      }
     }
     best?.focus({ preventScroll: false });
   }

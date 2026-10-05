@@ -90,6 +90,10 @@ const en = {
   upRepair: 'Hull repair',
   upRepairDesc: '+1 life',
   shieldOnline: 'Shield online',
+  combo: 'combo',
+  wpn: 'WPN',
+  touchDash: 'DASH',
+  touchBomb: 'BOMB',
   sound: 'Sound',
   muted: 'Muted · M',
   waveCleared: 'Wave {n} cleared',
@@ -190,6 +194,10 @@ const fr: Record<I18nKey, string> = {
   upRepair: 'Réparation de coque',
   upRepairDesc: '+1 vie',
   shieldOnline: 'Bouclier actif',
+  combo: 'combo',
+  wpn: 'ARME',
+  touchDash: 'ESQ.',
+  touchBomb: 'BOMBE',
   sound: 'Son',
   muted: 'Son coupé · M',
   waveCleared: 'Vague {n} terminée',
@@ -219,4 +227,9 @@ export function t(key: I18nKey, vars?: Record<string, string | number>): string 
 export function detectLang(): Lang {
   const nav = globalThis.navigator?.language?.toLowerCase() ?? 'en';
   return nav.startsWith('fr') ? 'fr' : 'en';
+}
+
+/** Locale-aware number formatting that follows the chosen language, not the browser's. */
+export function fmt(n: number): string {
+  return Math.round(n).toLocaleString(current === 'fr' ? 'fr-FR' : 'en-US');
 }

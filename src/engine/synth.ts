@@ -152,7 +152,17 @@ export class Synth {
   }
 
   /** Detuned saw stack through a resonant envelope filter ("supersaw-lite"). */
-  saws(t: number, freq: number, dur: number, dest: AudioNode, vol: number, cutoff: [number, number], detunes = [-12, 0, 11], drive = false, attack = 0.005): void {
+  saws(
+    t: number,
+    freq: number,
+    dur: number,
+    dest: AudioNode,
+    vol: number,
+    cutoff: [number, number],
+    detunes = [-12, 0, 11],
+    drive = false,
+    attack = 0.005,
+  ): void {
     const ctx = this.ctx;
     const f = ctx.createBiquadFilter();
     f.type = 'lowpass';

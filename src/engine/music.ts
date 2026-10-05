@@ -93,7 +93,10 @@ export class Music {
   ) {}
 
   setSong(song: Song): void {
-    if (song === this.song && this.queued === null) return;
+    if (song === this.song) {
+      this.queued = null; // cancel a pending switch away from the current song
+      return;
+    }
     if (song === this.queued) return;
     if (this.song === 'none' || song === 'none') {
       this.song = song;
@@ -219,7 +222,8 @@ export class Music {
     const { s, b } = this;
     const root = c[0]!;
     const tones = c.slice(1);
-    if (s16 === 0 || s16 === 7) for (const [i, n] of tones.entries()) s.fm(t + i * 0.012, midi(n), sx * 7, b.echo, 1, 1.6, 0.05, (i - 2) * 0.25);
+    if (s16 === 0 || s16 === 7)
+      for (const [i, n] of tones.entries()) s.fm(t + i * 0.012, midi(n), sx * 7, b.echo, 1, 1.6, 0.05, (i - 2) * 0.25);
     if (s16 === 0 || s16 === 10) s.tone(t, midi(root - 12), sx * 5, b.main, { vol: 0.17, attack: 0.01 });
     if (s16 === 0 || s16 === 9) this.kick(t, 0.42);
     if (s16 === 4 || s16 === 12) s.noiseBurst(t, 0.06, b.main, { type: 'bandpass', from: 2400, q: 2, vol: 0.06 });
@@ -245,7 +249,8 @@ export class Music {
   }
 
   private clap(t: number): void {
-    for (let i = 0; i < 3; i++) this.s.noiseBurst(t + i * 0.011, 0.09 + i * 0.03, this.b.main, { type: 'bandpass', from: 1300, q: 1.2, vol: 0.13 });
+    for (let i = 0; i < 3; i++)
+      this.s.noiseBurst(t + i * 0.011, 0.09 + i * 0.03, this.b.main, { type: 'bandpass', from: 1300, q: 1.2, vol: 0.13 });
   }
 
   private hat(t: number, vol: number, dur = 0.035): void {

@@ -2,7 +2,7 @@
 import type { AudioEngine } from '../engine/audio';
 import { Rng } from '../engine/rng';
 import { PALETTE } from '../game/config';
-import { t } from '../game/i18n';
+import { fmt, t } from '../game/i18n';
 import { CONSUMABLE_IDS, UPGRADES, cost, isMaxed, rerollCost, rollOffers, type UpgradeId } from '../game/upgrades';
 import type { World } from '../game/world';
 
@@ -95,7 +95,7 @@ export class ShopUI {
     const r = this.root;
     const focusedId = (document.activeElement as HTMLElement | null)?.dataset?.upgrade;
     const focusedBtn = document.activeElement?.id;
-    r.querySelector('#shop-credits')!.textContent = this.world.credits.toLocaleString();
+    r.querySelector('#shop-credits')!.textContent = fmt(this.world.credits);
     const offers = r.querySelector('#shop-offers')!;
     offers.replaceChildren(...this.offers.map((id) => this.card(id)));
     offers.classList.remove('rolled');
@@ -112,7 +112,10 @@ export class ShopUI {
     // Loadout summary.
     const owned = (Object.keys(UPGRADES) as UpgradeId[]).filter((id) => !UPGRADES[id].consumable && this.world.levels[id] > 0);
     r.querySelector('#shop-owned')!.innerHTML = owned
-      .map((id) => `<span class="chip" style="--c:${css(UPGRADES[id].color)}">${UPGRADES[id].glyph} ${t(UPGRADES[id].name)} · ${this.world.levels[id]}</span>`)
+      .map(
+        (id) =>
+          `<span class="chip" style="--c:${css(UPGRADES[id].color)}">${UPGRADES[id].glyph} ${t(UPGRADES[id].name)} · ${this.world.levels[id]}</span>`,
+      )
       .join('');
 
     // Keep focus stable across re-renders (keyboard / gamepad users).

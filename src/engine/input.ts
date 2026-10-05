@@ -16,6 +16,8 @@ export interface InputState {
   /** Mouse position in screen pixels. */
   mouseX: number;
   mouseY: number;
+  /** False until the mouse has moved over the canvas at least once. */
+  mouseSeen: boolean;
   firing: boolean;
   bomb: boolean;
   dash: boolean;
@@ -42,6 +44,7 @@ export class Input {
     aimY: 0,
     mouseX: 0,
     mouseY: 0,
+    mouseSeen: false,
     firing: false,
     bomb: false,
     dash: false,
@@ -71,6 +74,7 @@ export class Input {
     el.addEventListener('mousemove', (e) => {
       this.state.mouseX = e.clientX;
       this.state.mouseY = e.clientY;
+      this.state.mouseSeen = true;
       this.state.device = 'keyboard';
     });
     el.addEventListener('mousedown', (e) => {
@@ -127,9 +131,9 @@ export class Input {
     const k = this.keys;
     let mx = 0;
     let my = 0;
-    if (k.has('KeyW') || k.has('ArrowUp') || k.has('KeyZ')) my -= 1;
+    if (k.has('KeyW') || k.has('ArrowUp')) my -= 1;
     if (k.has('KeyS') || k.has('ArrowDown')) my += 1;
-    if (k.has('KeyA') || k.has('ArrowLeft') || k.has('KeyQ')) mx -= 1;
+    if (k.has('KeyA') || k.has('ArrowLeft')) mx -= 1;
     if (k.has('KeyD') || k.has('ArrowRight')) mx += 1;
     const l = len(mx, my);
     if (l > 0) {

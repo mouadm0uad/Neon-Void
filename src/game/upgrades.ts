@@ -6,17 +6,7 @@
 import { Rng } from '../engine/rng';
 import type { I18nKey } from './i18n';
 
-export type UpgradeId =
-  | 'fireRate'
-  | 'damage'
-  | 'speed'
-  | 'dash'
-  | 'magnet'
-  | 'drone'
-  | 'shieldGen'
-  | 'greed'
-  | 'bomb'
-  | 'repair';
+export type UpgradeId = 'fireRate' | 'damage' | 'speed' | 'dash' | 'magnet' | 'drone' | 'shieldGen' | 'greed' | 'bomb' | 'repair';
 
 export interface UpgradeDef {
   id: UpgradeId;
@@ -33,16 +23,76 @@ export interface UpgradeDef {
 }
 
 export const UPGRADES: Record<UpgradeId, UpgradeDef> = {
-  fireRate: { id: 'fireRate', name: 'upFireRate', desc: 'upFireRateDesc', max: 5, baseCost: 40, growth: 1.6, consumable: false, color: 3, glyph: '≫' },
-  damage: { id: 'damage', name: 'upDamage', desc: 'upDamageDesc', max: 4, baseCost: 60, growth: 1.7, consumable: false, color: 6, glyph: '✦' },
+  fireRate: {
+    id: 'fireRate',
+    name: 'upFireRate',
+    desc: 'upFireRateDesc',
+    max: 5,
+    baseCost: 40,
+    growth: 1.6,
+    consumable: false,
+    color: 3,
+    glyph: '≫',
+  },
+  damage: {
+    id: 'damage',
+    name: 'upDamage',
+    desc: 'upDamageDesc',
+    max: 4,
+    baseCost: 60,
+    growth: 1.7,
+    consumable: false,
+    color: 6,
+    glyph: '✦',
+  },
   speed: { id: 'speed', name: 'upSpeed', desc: 'upSpeedDesc', max: 4, baseCost: 30, growth: 1.6, consumable: false, color: 1, glyph: '➤' },
   dash: { id: 'dash', name: 'upDash', desc: 'upDashDesc', max: 3, baseCost: 35, growth: 1.7, consumable: false, color: 1, glyph: '⇥' },
-  magnet: { id: 'magnet', name: 'upMagnet', desc: 'upMagnetDesc', max: 3, baseCost: 25, growth: 1.6, consumable: false, color: 5, glyph: '◎' },
+  magnet: {
+    id: 'magnet',
+    name: 'upMagnet',
+    desc: 'upMagnetDesc',
+    max: 3,
+    baseCost: 25,
+    growth: 1.6,
+    consumable: false,
+    color: 5,
+    glyph: '◎',
+  },
   drone: { id: 'drone', name: 'upDrone', desc: 'upDroneDesc', max: 3, baseCost: 120, growth: 1.8, consumable: false, color: 4, glyph: '◇' },
-  shieldGen: { id: 'shieldGen', name: 'upShieldGen', desc: 'upShieldGenDesc', max: 3, baseCost: 90, growth: 1.7, consumable: false, color: 1, glyph: '⬡' },
+  shieldGen: {
+    id: 'shieldGen',
+    name: 'upShieldGen',
+    desc: 'upShieldGenDesc',
+    max: 3,
+    baseCost: 90,
+    growth: 1.7,
+    consumable: false,
+    color: 1,
+    glyph: '⬡',
+  },
   greed: { id: 'greed', name: 'upGreed', desc: 'upGreedDesc', max: 2, baseCost: 70, growth: 2, consumable: false, color: 4, glyph: '$' },
-  bomb: { id: 'bomb', name: 'upBomb', desc: 'upBombDesc', max: Infinity, baseCost: 35, growth: 1.3, consumable: true, color: 2, glyph: 'B' },
-  repair: { id: 'repair', name: 'upRepair', desc: 'upRepairDesc', max: Infinity, baseCost: 150, growth: 1.6, consumable: true, color: 4, glyph: '+' },
+  bomb: {
+    id: 'bomb',
+    name: 'upBomb',
+    desc: 'upBombDesc',
+    max: Infinity,
+    baseCost: 35,
+    growth: 1.3,
+    consumable: true,
+    color: 2,
+    glyph: 'B',
+  },
+  repair: {
+    id: 'repair',
+    name: 'upRepair',
+    desc: 'upRepairDesc',
+    max: Infinity,
+    baseCost: 150,
+    growth: 1.6,
+    consumable: true,
+    color: 4,
+    glyph: '+',
+  },
 };
 
 export const PERMANENT_IDS = (Object.keys(UPGRADES) as UpgradeId[]).filter((id) => !UPGRADES[id].consumable);
@@ -51,8 +101,7 @@ export const CONSUMABLE_IDS = (Object.keys(UPGRADES) as UpgradeId[]).filter((id)
 /** Levels owned (or times bought, for consumables). */
 export type Levels = Record<UpgradeId, number>;
 
-export const emptyLevels = (): Levels =>
-  Object.fromEntries((Object.keys(UPGRADES) as UpgradeId[]).map((k) => [k, 0])) as Levels;
+export const emptyLevels = (): Levels => Object.fromEntries((Object.keys(UPGRADES) as UpgradeId[]).map((k) => [k, 0])) as Levels;
 
 export function cost(id: UpgradeId, levels: Levels): number {
   const d = UPGRADES[id];

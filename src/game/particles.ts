@@ -36,17 +36,7 @@ export class Particles {
     Array.from({ length: ALPHA_BUCKETS }, (_, b) => `rgba(${p[0]},${p[1]},${p[2]},${(b + 1) / ALPHA_BUCKETS})`),
   );
 
-  spawn(
-    x: number,
-    y: number,
-    vx: number,
-    vy: number,
-    life: number,
-    color: number,
-    width = 2,
-    stretch = 0.035,
-    drag = 2.6,
-  ): void {
+  spawn(x: number, y: number, vx: number, vy: number, life: number, color: number, width = 2, stretch = 0.035, drag = 2.6): void {
     const i = this.head;
     this.head = (this.head + 1) % this.budget;
     this.x[i] = x;
@@ -135,6 +125,7 @@ export class Particles {
   private readonly order = new Int32Array(MAX);
   private readonly keys = new Uint8Array(MAX);
   private readonly bucketStart = new Int32Array(PALETTE.length * ALPHA_BUCKETS * 2 + 1);
+  private readonly cursor = new Int32Array(PALETTE.length * ALPHA_BUCKETS * 2);
 
   draw(g: CanvasRenderingContext2D): void {
     const { x, y, vx, vy, life, maxLife, width, stretch, color, keys, order, bucketStart } = this;
@@ -153,7 +144,8 @@ export class Particles {
       bucketStart[k + 1]++;
     }
     for (let k = 0; k < nb; k++) bucketStart[k + 1] += bucketStart[k]!;
-    const cursor = bucketStart.slice(0, nb);
+    const cursor = this.cursor;
+    cursor.set(bucketStart.subarray(0, nb));
     for (let i = 0; i < this.budget; i++) {
       const k = keys[i]!;
       if (k === 255) continue;
@@ -171,7 +163,7 @@ export class Particles {
         g.moveTo(x[i]!, y[i]!);
         g.lineTo(x[i]! - vx[i]! * s - 0.5, y[i]! - vy[i]! * s);
       }
-      const ci = (k >> 1) / ALPHA_BUCKETS | 0;
+      const ci = ((k >> 1) / ALPHA_BUCKETS) | 0;
       const ab = (k >> 1) % ALPHA_BUCKETS;
       g.strokeStyle = this.styles[ci]![ab]!;
       g.lineWidth = k & 1 ? 3.5 : 2;

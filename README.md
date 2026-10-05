@@ -2,177 +2,210 @@
 
 # NEON VOID
 
-**A twin-stick arena shooter built from scratch in TypeScript: no game engine, no image or sound files.**
-**Un twin-stick shooter d'arène codé de zéro en TypeScript, sans moteur de jeu ni fichiers image ou audio.**
+**A twin-stick arena shooter built from scratch in TypeScript.**<br>
+No game engine, no image files, no audio files: every pixel and every sound is generated in code.
 
-[▶ Play in your browser / Jouer dans le navigateur](https://YOUR-USERNAME.github.io/neon-void/)
+[**▶ Play in your browser**](https://YOUR-USERNAME.github.io/neon-void/) · [Version française](#français)
 
+[![CI](https://github.com/YOUR-USERNAME/neon-void/actions/workflows/deploy.yml/badge.svg)](https://github.com/YOUR-USERNAME/neon-void/actions/workflows/deploy.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-5-646cff?logo=vite&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-vitest-6e9f18)
-![Bundle](https://img.shields.io/badge/bundle-~25%20kB%20gzip-ff2ea0)
+![Tests](https://img.shields.io/badge/tests-33%20passing-6e9f18?logo=vitest&logoColor=white)
+![JS bundle](https://img.shields.io/badge/JS-35%20kB%20gzip-ff2ea0)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-<img src="docs/boss.png" alt="Boss fight against HEXACORE" width="100%" />
+<img src="docs/gameplay.gif" alt="Gameplay: the ship clears a wave, a bomb shockwave warps the grid, then the HEXACORE boss appears" width="100%" />
 
 </div>
 
-[English](#english) · [Français](#français)
+## About
 
----
+You pilot a lone ship in a neon arena whose grid bends and ripples with every explosion. Survive escalating waves, collect shards to grow your score multiplier, spend them on upgrades between waves, and take down **HEXACORE**, a three-phase bullet-hell boss that returns, stronger, every five waves.
 
-## English
+I built it to practise the parts of game development that an engine usually hides: the game loop, rendering and post-processing, physics, collision broadphase, audio synthesis, input handling and UI. The design favours small, testable modules over a framework.
 
-### The game
+<table>
+  <tr>
+    <td width="50%"><img src="docs/boss.png" alt="Boss fight" /></td>
+    <td width="50%"><img src="docs/shop.png" alt="Upgrade bay" /></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>HEXACORE, phase 2: gapped bullet rings and aimed fans</sub></td>
+    <td align="center"><sub>Upgrade bay: 4 random offers, reroll, supplies</sub></td>
+  </tr>
+</table>
 
-You're a lone ship in a neon arena, and the grid under it bends and ripples with every explosion. Survive escalating waves, collect green shards to raise your score multiplier, and take down **HEXACORE**, a three-phase bullet-hell boss that shows up every 5 waves.
+## Features
 
-- **6 enemy types**, each with its own behavior: wanderers, homing seekers, *dodgers* that sidestep your bullets, splitters, gunners that keep their distance, and **singularities** that bend your bullets, pull in your ship and swallow other enemies until they blow up.
-- **Boss with 3 phases**: spirals, rings with a gap you can slip through, aimed fans, minion summons and telegraphed charges that bounce off the walls.
-- **Upgrade bay (roguelite)**: shards are also your currency. After waves 2, 5, 7, 10 and so on, spend them on upgrades that last the whole run: fire rate, plasma damage, thrusters, dash cooldown, tractor field, **orbiting wing drones** that aim on their own, a **self-recharging shield**, and a shard refinery. You get 4 random offers per visit, plus a reroll that costs more each time, and bombs and hull repairs are always for sale.
-- **Power-ups**: weapon levels (up to 7 streams with piercing), shield, overdrive, magnet, bombs, extra lives. A pity timer stops long dry spells.
-- **Game feel**: hit-stop, slow motion, trauma-based screen shake, flashes, combos and floating scores.
-- **Plays anywhere**: keyboard + mouse, **gamepad** (standard mapping), or **touch** with two floating virtual sticks.
-- **Bilingual UI** (EN/FR, auto-detected), saved settings and high score, and support for `prefers-reduced-motion`.
-- **Attract mode**: on the title screen an AI pilot plays the game behind the menu.
+- **6 enemy types with distinct AI.** Wanderers, homing seekers, _dodgers_ that sidestep incoming bullets, splitters, gunners that hold their distance, and singularities that bend your shots, pull in your ship and swallow other enemies until they go supernova.
+- **A three-phase boss.** Breathing spirals, rings with a deliberate gap, aimed fans, minion summons and telegraphed charges that bounce off the walls. Every pattern leaves a readable way out.
+- **Roguelite upgrade bay.** Shards double as currency. After waves 2, 5, 7, 10 and so on, buy run-long upgrades: fire rate, damage, thrusters, dash cooldown, pickup range, orbiting **auto-aiming drones**, a **self-recharging shield** and a shard refinery.
+- **Game feel.** Hit-stop, slow motion, trauma-based screen shake, flashes, combos, floating scores, a wave-clear bonus (doubled when flawless) and a heartbeat warning on your last life.
+- **Adaptive procedural soundtrack.** Four songs (title, battle, boss, shop) switch on the bar line, and the battle track adds layers as the action builds.
+- **Plays anywhere.** Keyboard and mouse, gamepad, or touch with two floating virtual sticks. The menus also work with a gamepad or the arrow keys.
+- **Bilingual (EN/FR).** The language is auto-detected, settings and best score are saved, and `prefers-reduced-motion` is respected.
+- **Attract mode.** On the title screen an AI pilot plays the real game behind the menu.
 
 ### Controls
 
-| Action | Keyboard / Mouse | Gamepad | Touch |
-|---|---|---|---|
-| Move | WASD / ZQSD / Arrows | Left stick | Left thumb |
-| Aim & fire | Mouse + left click | Right stick / RT | Right thumb |
-| Dash (i-frames) | Shift | A / LB | DASH button |
-| Bomb | Space / Right click | B / RB | BOMB button |
-| Pause | Esc / P | Start | ❚❚ button |
-| Mute | M | — | Pause menu |
+| Action          | Keyboard / mouse    | Gamepad          | Touch       |
+| --------------- | ------------------- | ---------------- | ----------- |
+| Move            | WASD / ZQSD, arrows | Left stick       | Left thumb  |
+| Aim and fire    | Mouse + left click  | Right stick / RT | Right thumb |
+| Dash (i-frames) | Shift               | A / LB           | DASH        |
+| Bomb            | Space / right click | B / RB           | BOMB        |
+| Pause           | Esc / P             | Start            | ❚❚          |
+| Mute            | M                   | —                | Pause menu  |
 
-### Technical highlights
+## Engineering highlights
 
-What this project demonstrates:
+| Area          | What it does                                                                                                                                                                                                         | Where                              |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| Game loop     | Fixed 120 Hz timestep with an accumulator, so the simulation behaves the same at 60 Hz and 144 Hz. Clamped to avoid the spiral of death.                                                                             | `engine/loop.ts`                   |
+| Rendering     | Canvas2D scene drawn additively, then a two-octave bloom (downsample + blur) composited on top. Detects `ctx.filter` and falls back to bilinear blur.                                                                | `engine/renderer.ts`               |
+| Warp grid     | About 1,300 point masses and 2,600 damped springs in struct-of-arrays `Float32Array`s, stepped at 60 Hz. Explosions push it, singularities pull it in.                                                               | `game/grid.ts`                     |
+| Particles     | A 12,000-particle ring buffer with no per-frame allocation. A counting sort groups particles by colour, alpha and width, so the whole system draws in about 70 `stroke()` calls.                                     | `game/particles.ts`                |
+| Collisions    | Uniform-grid spatial hash used for bullet hits, swarm separation and the bullet-dodging AI. Queries de-duplicate with a stamp instead of allocating a `Set`.                                                         | `engine/spatialHash.ts`            |
+| Audio         | 27 layered sound effects from oscillators, FM pairs, filtered noise and waveshaping, with stereo panning by screen position, a generated convolution reverb, ducking on big hits and a lowpass "muffle" when paused. | `engine/audio.ts`, `synth.ts`      |
+| Music         | A lookahead step sequencer on the AudioContext clock (sample-accurate). Songs change on the next bar line, and the kick sidechain-pumps the mix. Shard pickups climb a pentatonic scale, so a chain plays a melody.  | `engine/music.ts`                  |
+| Wave director | Seeded and deterministic. Each wave buys enemies from a growing budget and releases them in formations, and a newly unlocked enemy gets a debut wave.                                                                | `game/waves.ts`                    |
+| Economy       | Data-driven upgrade definitions with escalating prices and Fisher–Yates offer rolls that skip maxed items. Combat stats are derived from upgrade levels.                                                             | `game/upgrades.ts`                 |
+| Input and UI  | Keyboard, mouse, gamepad and multi-touch reduce to one abstract state. A spatial focus navigator makes the DOM menus usable with a gamepad.                                                                          | `engine/input.ts`, `ui/menuNav.ts` |
+| i18n          | Typed dictionaries: TypeScript and a test both check that every key exists in every language.                                                                                                                        | `game/i18n.ts`                     |
 
-| System | What's interesting |
-|---|---|
-| **Fixed-timestep loop** (`engine/loop.ts`) | 120 Hz deterministic simulation that doesn't depend on display refresh rate, with spiral-of-death protection. |
-| **Bloom post-process** (`engine/renderer.ts`) | Two-octave downsample + blur pipeline in Canvas2D composited additively. It feature-detects `ctx.filter` and falls back to bilinear downsampling. |
-| **Spring-mass warp grid** (`game/grid.ts`) | About 1,300 point masses and 2,600 damped springs stored in struct-of-arrays `Float32Array`s. Explosions push it, singularities pull it in, and the ship leaves a wake. |
-| **Particle system** (`game/particles.ts`) | 12k-particle ring buffer with zero allocations per frame. A **counting sort** groups particles by color, alpha and width so each batch is a single `stroke()`, about 70 draw calls instead of 12,000. |
-| **Spatial hashing** (`engine/spatialHash.ts`) | Uniform-grid broadphase for bullet-vs-enemy hits, flocking separation and bullet-dodging AI. Queries de-duplicate with a stamp instead of allocating a `Set`. |
-| **Procedural audio** (`engine/audio.ts`, `synth.ts`, `music.ts`) | No audio files at all. 27 layered sound effects are built from oscillators, FM pairs, filtered noise and distortion. They are panned by screen position, sent through a generated convolution reverb, and big hits duck the music. Shard pickups climb a pentatonic scale, so collecting a chain plays a melody. The adaptive soundtrack has four songs (title, game, boss, upgrade bay) that switch on the next bar line. In-game, new layers come in as the action builds and the kick pumps the mix sidechain-style. Pausing or shopping muffles everything through a lowpass. A test harness renders each sound offline with `OfflineAudioContext` and checks its level. |
-| **Wave director** (`game/waves.ts`) | Deterministic, seeded and budget-based. Enemies are bought from a budget that grows with each wave, new enemies get a debut wave, and groups spawn in formations. It's fully unit-tested. |
-| **Unified input** (`engine/input.ts`) | Keyboard, mouse, gamepad and multi-touch all reduce to one abstract state, and the last device you touched wins. |
-| **Upgrade economy** (`game/upgrades.ts`) | Pure, data-driven upgrade definitions with rising prices, Fisher–Yates offer rolls that avoid maxed items, and stats derived from levels. It's unit-tested. |
-| **Spatial menu navigation** (`ui/menuNav.ts`) | The whole DOM UI works with a gamepad (D-pad or stick, A and B) and arrow keys. Focus moves to the nearest element in that direction, and sliders and selects can be adjusted in place. |
-| **Typed i18n** (`game/i18n.ts`) | TypeScript and a test both check that every key exists in every language. |
+### Architecture
 
-Gameplay code reaches the browser only through small interfaces (`WorldHooks`, `BossHost`). That keeps the simulation testable and lets the title screen run the same `World` with an AI providing the `Controls`.
+```mermaid
+flowchart LR
+  subgraph Engine["engine/ (game-agnostic)"]
+    Loop[GameLoop<br/>fixed 120 Hz]
+    Input[Input<br/>kb · mouse · pad · touch]
+    Renderer[Renderer<br/>camera · shake · bloom]
+    Audio[AudioEngine<br/>SFX · reverb · ducking]
+    Music[Music<br/>step sequencer]
+  end
+  subgraph Game["game/"]
+    World[World<br/>rules & systems]
+    Boss[Boss]
+    Waves[Wave director]
+    Upgrades[Upgrades]
+    Grid[Warp grid]
+    Particles[Particles]
+    HUD[HUD]
+  end
+  Main[main.ts<br/>state machine + DOM menus] --> Loop
+  Loop -->|update dt| World
+  Loop -->|render| Renderer
+  Input --> Main
+  Main -->|Controls| World
+  World --> Boss & Waves & Upgrades & Grid & Particles
+  World -.WorldHooks.-> Renderer & Audio
+  Audio --> Music
+  Renderer --> HUD
+```
 
-### Getting started
+The simulation reaches the outside world only through two small interfaces, `WorldHooks` and `BossHost`. That keeps gameplay deterministic and testable: the test suite runs the real `World` headless in Node with stub hooks, and the title screen runs the same `World` with an AI supplying the `Controls`.
+
+### Testing
+
+`npm test` runs 33 Vitest tests:
+
+- **Engine:** math, the seeded RNG and spatial hashing.
+- **Rules:** the wave director's budget and unlocks, upgrade pricing and offer rolls, and i18n completeness.
+- **Headless simulation:** a 3-minute AI-piloted run that checks no value becomes NaN, plus shop open/close, wave-clear and extra-life rules, single game-over reporting, and a regression test that the boss stops firing after the player dies.
+- **Music:** song queueing.
+
+CI (`.github/workflows/deploy.yml`) runs typecheck, ESLint, the Prettier check, the tests and both builds on every push, then deploys `main` to GitHub Pages.
+
+## Getting started
+
+Requires Node 20 or newer.
 
 ```bash
 npm install
-npm run dev        # dev server with HMR
-npm test           # unit tests (vitest)
-npm run build      # typecheck + production build into dist/
+npm run dev          # dev server with hot reload
 ```
+
+| Script                 | Purpose                                                               |
+| ---------------------- | --------------------------------------------------------------------- |
+| `npm run build`        | Typecheck, then a production build into `dist/`                       |
+| `npm run build:single` | One self-contained `dist-standalone/neon-void.html` that runs offline |
+| `npm test`             | Unit and simulation tests                                             |
+| `npm run lint`         | ESLint (typescript-eslint)                                            |
+| `npm run format`       | Prettier                                                              |
+| `npm run check`        | Everything CI checks, locally                                         |
 
 ### Deploy to GitHub Pages
 
-1. Push this repo to GitHub as `neon-void` (or any name; the build uses relative paths).
-2. Open **Settings → Pages → Source** and choose **GitHub Actions**.
-3. Each push to `main` runs the tests, builds the game and deploys it with `.github/workflows/deploy.yml`.
-4. Replace `YOUR-USERNAME` in the link at the top of this README.
+1. Push the repository to GitHub. The build uses relative paths, so any repository name works.
+2. In **Settings → Pages**, set **Source** to **GitHub Actions**.
+3. Every push to `main` is tested, built and deployed. Then replace `YOUR-USERNAME` in this README and in `package.json`.
+4. Optional: upload `docs/social-preview.png` in **Settings → General → Social preview** for a nicer link card.
 
 ### Project structure
 
 ```
 src/
-├── engine/           # reusable, game-agnostic
-│   ├── audio.ts      # WebAudio synth + sequencer
-│   ├── input.ts      # keyboard / mouse / gamepad / touch
-│   ├── loop.ts       # fixed-timestep loop
-│   ├── math.ts       # vector & easing helpers
-│   ├── renderer.ts   # canvas, camera, shake, bloom
-│   ├── rng.ts        # seedable PRNG (mulberry32)
-│   ├── spatialHash.ts
-│   └── storage.ts    # safe localStorage
+├── engine/            game-agnostic building blocks
+│   ├── loop.ts        fixed-timestep loop
+│   ├── renderer.ts    canvas, camera, screen shake, bloom
+│   ├── input.ts       keyboard / mouse / gamepad / touch
+│   ├── audio.ts       mix bus, reverb, ducking, 27 SFX
+│   ├── synth.ts       oscillator / FM / noise primitives
+│   ├── music.ts       adaptive 4-song sequencer
+│   ├── spatialHash.ts broadphase collisions
+│   ├── rng.ts         seedable PRNG (mulberry32)
+│   ├── math.ts · storage.ts
 ├── game/
-│   ├── world.ts      # simulation & rules
-│   ├── boss.ts       # HEXACORE state machine
-│   ├── waves.ts      # wave director
-│   ├── grid.ts       # spring-mass warp grid
-│   ├── particles.ts
-│   ├── shapes.ts     # procedural vector art
-│   ├── hud.ts
-│   ├── entities.ts
-│   ├── config.ts     # tunables & palette
-│   ├── upgrades.ts   # roguelite upgrade economy
-│   └── i18n.ts
+│   ├── world.ts       simulation and rules
+│   ├── boss.ts        HEXACORE state machine
+│   ├── waves.ts       wave director
+│   ├── upgrades.ts    roguelite economy
+│   ├── grid.ts        spring-mass warp grid
+│   ├── particles.ts   batched particle system
+│   ├── shapes.ts      procedural vector art
+│   ├── hud.ts · entities.ts · config.ts · i18n.ts
 ├── ui/
-│   ├── shop.ts       # upgrade bay screen
-│   └── menuNav.ts    # gamepad / arrow-key menu navigation
-└── main.ts           # app shell & state machine
-tests/                # vitest suites
+│   ├── shop.ts        upgrade bay screen
+│   └── menuNav.ts     gamepad / arrow-key menu navigation
+└── main.ts            app shell and state machine
+tests/                 Vitest suites (engine, rules, headless simulation)
+scripts/               single-file build
 ```
+
+### Ideas for next steps
+
+- Online leaderboard and a daily seeded challenge (the wave director is already deterministic).
+- More game modes (Pacifism, Time Attack) and a second boss.
+- A WebGL renderer behind the same `Renderer` interface for higher particle counts.
 
 ---
 
 ## Français
 
-### Le jeu
+**NEON VOID** est un twin-stick shooter d'arène codé de zéro en TypeScript, sans moteur de jeu ni fichiers image ou audio : tout est généré par le code. [**▶ Jouer dans le navigateur**](https://YOUR-USERNAME.github.io/neon-void/)
 
-Vous pilotez un vaisseau seul dans une arène néon, et la grille sous vos pieds se déforme et ondule à chaque explosion. Survivez à des vagues de plus en plus difficiles, ramassez les éclats verts pour faire monter votre multiplicateur et abattez **HEXACORE**, un boss bullet-hell en trois phases qui apparaît toutes les 5 vagues.
+Vous pilotez un vaisseau dans une arène néon dont la grille se déforme à chaque explosion. Survivez aux vagues, ramassez les éclats pour augmenter votre multiplicateur, dépensez-les à l'atelier entre les vagues et battez **HEXACORE**, un boss en trois phases qui revient toutes les cinq vagues.
 
-- **6 types d'ennemis**, chacun avec son comportement : rôdeurs, traqueurs à tête chercheuse, *esquiveurs* qui évitent vos tirs, diviseurs, artilleurs qui gardent leurs distances, et **singularités** qui courbent vos projectiles, attirent votre vaisseau et avalent les autres ennemis jusqu'à exploser.
-- **Boss en 3 phases** : spirales, anneaux avec une ouverture pour passer, tirs en éventail, invocation de sbires et charges annoncées qui rebondissent sur les murs.
-- **Atelier (roguelite)** : les éclats servent aussi de monnaie. Après les vagues 2, 5, 7, 10, etc., achetez des améliorations valables toute la partie : cadence, dégâts plasma, propulseurs, recharge d'esquive, rayon tracteur, **drones d'escorte** qui visent tout seuls, **bouclier qui se recharge** et raffinerie d'éclats. Chaque visite propose 4 offres au hasard, avec une relance de plus en plus chère, et les bombes et réparations sont toujours en vente.
-- **Bonus** : niveaux d'arme (jusqu'à 7 flux de tir perforants), bouclier, surcharge, aimant, bombes, vies supplémentaires. Un système anti-malchance évite les longues séries sans bonus.
-- **Sensations de jeu** : arrêt sur impact (hit-stop), ralenti, tremblement d'écran progressif, flashs, combos et scores flottants.
-- **Jouable partout** : clavier + souris, **manette** (mapping standard) ou **tactile** avec deux joysticks virtuels flottants.
-- **Interface bilingue** (FR/EN, détectée automatiquement), paramètres et record sauvegardés, prise en charge de `prefers-reduced-motion`.
-- **Mode démo** : sur l'écran titre, une IA pilote le vaisseau derrière le menu.
+**Contenu du jeu**
 
-### Commandes
+- **Ennemis et boss :** 6 types d'ennemis aux comportements distincts, dont un qui esquive vos tirs et une singularité qui courbe vos projectiles. Le boss a trois phases, et ses attaques laissent toujours une issue lisible.
+- **Atelier roguelite :** cadence, dégâts, vitesse, esquive, portée de collecte, drones qui visent seuls, bouclier qui se recharge, raffinerie d'éclats.
+- **Bande-son adaptative :** quatre morceaux procéduraux (titre, combat, boss, atelier) et 27 effets sonores positionnés en stéréo.
+- **Plateformes :** clavier et souris, manette ou tactile. L'interface est en français et en anglais.
 
-| Action | Clavier / Souris | Manette | Tactile |
-|---|---|---|---|
-| Se déplacer | WASD / ZQSD / Flèches | Stick gauche | Pouce gauche |
-| Viser et tirer | Souris + clic gauche | Stick droit / RT | Pouce droit |
-| Esquive (invulnérable) | Maj | A / LB | Bouton DASH |
-| Bombe | Espace / clic droit | B / RB | Bouton BOMB |
-| Pause | Échap / P | Start | Bouton ❚❚ |
-| Couper le son | M | — | Menu pause |
+**Points techniques**
 
-### Points techniques
+- **Moteur :** boucle à pas fixe de 120 Hz, bloom en Canvas2D, grille masses-ressorts dans des `Float32Array`.
+- **Performance :** 12 000 particules dessinées en environ 70 appels grâce à un tri par comptage, et hachage spatial pour les collisions.
+- **Audio :** synthèse WebAudio (FM, bruit filtré, réverbération par convolution) et séquenceur calé sur l'horloge audio.
+- **Qualité :** 33 tests, dont une simulation complète du jeu exécutée sans navigateur dans Node. Intégration continue avec vérification des types, ESLint, Prettier, tests et déploiement sur GitHub Pages.
 
-- **Boucle à pas fixe** à 120 Hz : simulation déterministe, quelle que soit la fréquence de l'écran.
-- **Bloom** en deux octaves (sous-échantillonnage + flou) en Canvas2D, avec détection de `ctx.filter` et une solution de repli.
-- **Grille masses-ressorts** : environ 1 300 points et 2 600 ressorts amortis stockés dans des `Float32Array`.
-- **Particules** : tampon circulaire de 12 000 particules, aucune allocation par image, et un **tri par comptage** qui réduit les appels de dessin à environ 70 lots.
-- **Hachage spatial** pour les collisions, la séparation des essaims et l'IA d'esquive.
-- **Audio 100 % procédural** : 27 effets en couches (FM, bruit filtré, distorsion) positionnés en stéréo, avec réverbération et atténuation de la musique sur les gros impacts. Les éclats jouent une gamme pentatonique. La bande-son adaptative compte quatre morceaux (titre, jeu, boss, atelier) qui s'enchaînent à la mesure, avec un effet de pompage et un filtre étouffé en pause.
-- **Directeur de vagues** déterministe à budget, couvert par des tests unitaires.
-- **i18n typée** : TypeScript et un test vérifient que chaque clé est traduite dans chaque langue.
-
-### Démarrer
-
-```bash
-npm install
-npm run dev     # serveur de développement
-npm test        # tests unitaires
-npm run build   # vérification des types + build de production
-```
-
-### Déployer sur GitHub Pages
-
-Poussez le dépôt sur GitHub, puis choisissez **Settings → Pages → Source : GitHub Actions**. Le workflow fourni lance les tests, compile le jeu et le déploie à chaque push sur `main`.
+**Démarrer :** `npm install`, puis `npm run dev`. `npm run build:single` produit un fichier HTML unique jouable hors ligne.
 
 ---
 
 <div align="center">
-<img src="docs/shop.png" alt="Upgrade bay" width="100%" />
-<img src="docs/warp-grid.png" alt="Bomb shockwave warping the grid" width="49%" />
-<img src="docs/title.png" alt="Title screen" width="49%" />
-
-MIT License
+<img src="docs/title.png" alt="Title screen" width="70%" /><br/>
+<sub>Released under the <a href="LICENSE">MIT License</a>.</sub>
 </div>

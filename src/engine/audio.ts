@@ -45,9 +45,33 @@ export type Sfx =
   | 'wellGulp';
 
 export const ALL_SFX: readonly Sfx[] = [
-  'shoot', 'hit', 'explode', 'bigExplode', 'pickup', 'powerup', 'bomb', 'dash', 'spawn', 'playerHit',
-  'enemyShoot', 'wave', 'waveClear', 'select', 'move', 'buy', 'deny', 'shieldBreak', 'shieldUp', 'drone',
-  'bossPhase', 'bossCharge', 'bossDeath', 'gameOver', 'extraLife', 'heartbeat', 'wellGulp',
+  'shoot',
+  'hit',
+  'explode',
+  'bigExplode',
+  'pickup',
+  'powerup',
+  'bomb',
+  'dash',
+  'spawn',
+  'playerHit',
+  'enemyShoot',
+  'wave',
+  'waveClear',
+  'select',
+  'move',
+  'buy',
+  'deny',
+  'shieldBreak',
+  'shieldUp',
+  'drone',
+  'bossPhase',
+  'bossCharge',
+  'bossDeath',
+  'gameOver',
+  'extraLife',
+  'heartbeat',
+  'wellGulp',
 ];
 
 export interface PlayOpts {
@@ -207,7 +231,7 @@ export class AudioEngine {
   }
   set musicVolume(v: number) {
     this._musicVol = v;
-    if (this.ctx) this.musicBus.gain.setTargetAtTime(v * 0.6, this.ctx.currentTime, 0.05);
+    if (this.ctx) this.musicBus.gain.setTargetAtTime(v * 0.8, this.ctx.currentTime, 0.05);
   }
   get muted(): boolean {
     return this._muted;
@@ -380,7 +404,9 @@ export class AudioEngine {
         });
         break;
       case 'extraLife':
-        [0, 4, 7, 12, 7, 12, 16, 19].forEach((iv, i) => s.tone(t + i * 0.07, midi(72 + iv), 0.25, out, { type: 'square', vol: 0.05, filter: [5000, 1500] }));
+        [0, 4, 7, 12, 7, 12, 16, 19].forEach((iv, i) =>
+          s.tone(t + i * 0.07, midi(72 + iv), 0.25, out, { type: 'square', vol: 0.05, filter: [5000, 1500] }),
+        );
         break;
       case 'shieldUp':
         s.tone(t, 400, 0.5, out, { to: 1600, vol: 0.06, type: 'triangle', vibrato: [30, 12], attack: 0.1 });
@@ -419,8 +445,14 @@ export class AudioEngine {
         s.noiseBurst(t, 0.5, out, { type: 'bandpass', from: 300, to: 4000, q: 2, vol: 0.06, reverse: true });
         break;
       case 'waveClear':
-        [[0, 4, 7], [5, 9, 12], [7, 11, 14, 19]].forEach((ch, i) =>
-          ch.forEach((iv) => s.tone(t + i * 0.12, midi(67 + iv), i === 2 ? 0.9 : 0.16, out, { type: 'square', vol: 0.03, filter: [5000, 1200] })),
+        [
+          [0, 4, 7],
+          [5, 9, 12],
+          [7, 11, 14, 19],
+        ].forEach((ch, i) =>
+          ch.forEach((iv) =>
+            s.tone(t + i * 0.12, midi(67 + iv), i === 2 ? 0.9 : 0.16, out, { type: 'square', vol: 0.03, filter: [5000, 1200] }),
+          ),
         );
         break;
       case 'gameOver':

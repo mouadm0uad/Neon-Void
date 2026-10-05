@@ -25,8 +25,16 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
       - run: npm test
       - run: npm run build
+      - run: npm run build:single
+      - uses: actions/upload-artifact@v4
+        with:
+          name: neon-void-standalone
+          path: dist-standalone/neon-void.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

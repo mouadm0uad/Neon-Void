@@ -2,7 +2,7 @@
 import type { Input } from '../engine/input';
 import { TAU, clamp, easeOutBack } from '../engine/math';
 import { C, PLAYER, rgb } from './config';
-import { t } from './i18n';
+import { fmt, t } from './i18n';
 import { drawShip } from './shapes';
 import type { World } from './world';
 
@@ -25,7 +25,7 @@ export function drawHud(g: CanvasRenderingContext2D, w: World, input: Input, W: 
 
   // Low-life warning: pulsing red edges in time with the heartbeat.
   if (o.playing && !w.attract && !w.dead && w.lives === 1) {
-    const beat = Math.pow(Math.max(0, Math.sin(w.time * Math.PI / 1.15 * 2)), 8);
+    const beat = Math.pow(Math.max(0, Math.sin(((w.time * Math.PI) / 1.15) * 2)), 8);
     const grad = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.7);
     grad.addColorStop(0, 'rgba(255,30,60,0)');
     grad.addColorStop(1, `rgba(255,30,60,${0.12 + beat * 0.22})`);
@@ -45,7 +45,7 @@ export function drawHud(g: CanvasRenderingContext2D, w: World, input: Input, W: 
     g.fillText(t('score').toUpperCase(), pad, pad);
     g.fillStyle = '#fff';
     g.font = `800 ${30 * s}px ${FONT}`;
-    g.fillText(w.score.toLocaleString(), pad, pad + 14 * s);
+    g.fillText(fmt(w.score), pad, pad + 14 * s);
     g.shadowColor = rgb(C.Green);
     g.fillStyle = rgb(C.Green);
     g.font = `700 ${18 * s}px ${FONT}`;
@@ -54,13 +54,13 @@ export function drawHud(g: CanvasRenderingContext2D, w: World, input: Input, W: 
     g.shadowColor = rgb(C.Gold);
     g.fillStyle = rgb(C.Gold, 0.95);
     g.font = `600 ${13 * s}px ${FONT}`;
-    g.fillText(`◆ ${w.credits.toLocaleString()}`, pad, pad + 74 * s);
+    g.fillText(`◆ ${fmt(w.credits)}`, pad, pad + 74 * s);
     if (w.combo >= 5) {
       const pulse = 1 + Math.max(0, w.comboT - SCORE_PULSE) * 0.4;
       g.fillStyle = rgb(C.Gold, clamp(w.comboT, 0, 1));
       g.shadowColor = rgb(C.Gold);
       g.font = `700 ${14 * s * pulse}px ${FONT}`;
-      g.fillText(`${w.combo} COMBO`, pad + 70 * s, pad + 54 * s);
+      g.fillText(`${w.combo} ${t('combo').toUpperCase()}`, pad + 70 * s, pad + 54 * s);
     }
 
     // Best + lives + bombs.
@@ -71,7 +71,7 @@ export function drawHud(g: CanvasRenderingContext2D, w: World, input: Input, W: 
     g.fillText(t('best').toUpperCase(), W - pad, pad);
     g.fillStyle = '#fff';
     g.font = `700 ${18 * s}px ${FONT}`;
-    g.fillText(Math.max(o.best, w.score).toLocaleString(), W - pad, pad + 14 * s);
+    g.fillText(fmt(Math.max(o.best, w.score)), W - pad, pad + 14 * s);
     g.shadowBlur = 0;
 
     g.globalCompositeOperation = 'lighter';
@@ -133,7 +133,7 @@ export function drawHud(g: CanvasRenderingContext2D, w: World, input: Input, W: 
     }
     g.fillStyle = rgb(C.Gold, 0.8);
     g.font = `600 ${10 * s}px ${FONT}`;
-    g.fillText('WPN', pad, by - 14 * s);
+    g.fillText(t('wpn'), pad, by - 14 * s);
     let row = 0;
     const timer = (label: string, v: number, max: number, col: number): void => {
       const y = by - 36 * s - row * 18 * s;
@@ -154,7 +154,13 @@ export function drawHud(g: CanvasRenderingContext2D, w: World, input: Input, W: 
     // Dash cooldown ring near bottom-left.
     const dashReady = w.dashCd <= 0;
     g.beginPath();
-    g.arc(pad + 108 * s, by - 5 * s, 7 * s, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - w.dashCd / PLAYER.dashCooldown));
+    g.arc(
+      pad + 108 * s,
+      by - 5 * s,
+      7 * s,
+      -Math.PI / 2,
+      -Math.PI / 2 + TAU * (1 - w.dashCd / (PLAYER.dashCooldown * w.derived.dashCdMul)),
+    );
     g.strokeStyle = dashReady ? rgb(C.Cyan) : 'rgba(255,255,255,0.35)';
     g.lineWidth = 2.5;
     g.stroke();
@@ -213,7 +219,12 @@ export function drawHud(g: CanvasRenderingContext2D, w: World, input: Input, W: 
     g.lineWidth = 2;
     g.beginPath();
     g.arc(mx, my, 9, 0, TAU);
-    for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+    for (const [ax, ay] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ] as const) {
       g.moveTo(mx + ax * 5, my + ay * 5);
       g.lineTo(mx + ax * 14, my + ay * 14);
     }
@@ -253,4 +264,3 @@ export function drawHud(g: CanvasRenderingContext2D, w: World, input: Input, W: 
   }
   g.restore();
 }
-

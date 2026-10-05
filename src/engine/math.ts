@@ -9,8 +9,7 @@ export const TAU = Math.PI * 2;
 
 export const vec = (x = 0, y = 0): Vec2 => ({ x, y });
 
-export const clamp = (v: number, min: number, max: number): number =>
-  v < min ? min : v > max ? max : v;
+export const clamp = (v: number, min: number, max: number): number => (v < min ? min : v > max ? max : v);
 
 export const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 
@@ -55,14 +54,7 @@ export const rotateToward = (from: number, to: number, maxStep: number): number 
   return from + Math.sign(d) * maxStep;
 };
 
-export const circlesOverlap = (
-  ax: number,
-  ay: number,
-  ar: number,
-  bx: number,
-  by: number,
-  br: number,
-): boolean => {
+export const circlesOverlap = (ax: number, ay: number, ar: number, bx: number, by: number, br: number): boolean => {
   const dx = ax - bx;
   const dy = ay - by;
   const r = ar + br;

@@ -4,12 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
     <meta name="theme-color" content="#04020c" />
-    <meta name="description" content="NEON VOID — a twin-stick arena shooter built from scratch in TypeScript: custom engine, bloom renderer, spring-mass warp grid and procedural audio." />
+    <meta
+      name="description"
+      content="NEON VOID — a twin-stick arena shooter built from scratch in TypeScript: custom engine, bloom renderer, spring-mass warp grid and procedural audio."
+    />
     <title>NEON VOID</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2304020c'/%3E%3Cpath d='M27 16 9 26 5 22 12 16 5 10 9 6Z' fill='none' stroke='%2300f0ff' stroke-width='2.5' stroke-linejoin='round'/%3E%3C/svg%3E" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2304020c'/%3E%3Cpath d='M27 16 9 26 5 22 12 16 5 10 9 6Z' fill='none' stroke='%2300f0ff' stroke-width='2.5' stroke-linejoin='round'/%3E%3C/svg%3E"
+    />
   </head>
   <body>
     <canvas id="game" tabindex="0" aria-label="Game canvas"></canvas>
@@ -36,12 +39,30 @@
       <section class="screen" id="screen-howto" data-screen="howto" hidden>
         <h2 data-i18n="howTo"></h2>
         <table class="controls">
-          <tr><th data-i18n="controlsMove"></th><td data-i18n="kbMove"></td></tr>
-          <tr><th data-i18n="controlsAim"></th><td data-i18n="kbAim"></td></tr>
-          <tr><th data-i18n="controlsDash"></th><td data-i18n="kbDash"></td></tr>
-          <tr><th data-i18n="controlsBomb"></th><td data-i18n="kbBomb"></td></tr>
-          <tr><th data-i18n="controlsPause"></th><td data-i18n="kbPause"></td></tr>
-          <tr><th data-i18n="sound"></th><td>M</td></tr>
+          <tr>
+            <th data-i18n="controlsMove"></th>
+            <td data-i18n="kbMove"></td>
+          </tr>
+          <tr>
+            <th data-i18n="controlsAim"></th>
+            <td data-i18n="kbAim"></td>
+          </tr>
+          <tr>
+            <th data-i18n="controlsDash"></th>
+            <td data-i18n="kbDash"></td>
+          </tr>
+          <tr>
+            <th data-i18n="controlsBomb"></th>
+            <td data-i18n="kbBomb"></td>
+          </tr>
+          <tr>
+            <th data-i18n="controlsPause"></th>
+            <td data-i18n="kbPause"></td>
+          </tr>
+          <tr>
+            <th data-i18n="sound"></th>
+            <td>M</td>
+          </tr>
         </table>
         <p class="hint" data-i18n="padHint"></p>
         <p class="hint" data-i18n="touchHint"></p>
@@ -57,14 +78,23 @@
       <!-- Settings -->
       <section class="screen" id="screen-settings" data-screen="settings" hidden>
         <h2 data-i18n="settings"></h2>
-        <form class="settings" id="settings-form" onsubmit="return false">
-          <label><span data-i18n="language"></span>
-            <select name="lang"><option value="en">English</option><option value="fr">Français</option></select>
+        <form class="settings" id="settings-form">
+          <label
+            ><span data-i18n="language"></span>
+            <select name="lang">
+              <option value="en">English</option>
+              <option value="fr">Français</option>
+            </select>
           </label>
           <label><span data-i18n="sfx"></span><input type="range" name="sfx" min="0" max="1" step="0.05" /></label>
           <label><span data-i18n="music"></span><input type="range" name="music" min="0" max="1" step="0.05" /></label>
-          <label><span data-i18n="bloom"></span>
-            <select name="bloom"><option value="high" data-i18n="high"></option><option value="low" data-i18n="low"></option><option value="off" data-i18n="off"></option></select>
+          <label
+            ><span data-i18n="bloom"></span>
+            <select name="bloom">
+              <option value="high" data-i18n="high"></option>
+              <option value="low" data-i18n="low"></option>
+              <option value="off" data-i18n="off"></option>
+            </select>
           </label>
           <label><span data-i18n="shake"></span><input type="range" name="shake" min="0" max="1" step="0.1" /></label>
           <label class="check"><span data-i18n="showFps"></span><input type="checkbox" name="fps" /></label>
@@ -117,8 +147,8 @@
 
     <div id="touch-buttons" hidden>
       <button data-touch="pause" aria-label="Pause">II</button>
-      <button data-touch="dash" aria-label="Dash">DASH</button>
-      <button data-touch="bomb" aria-label="Bomb">BOMB</button>
+      <button data-touch="dash" aria-label="Dash" data-i18n="touchDash"></button>
+      <button data-touch="bomb" aria-label="Bomb" data-i18n="touchBomb"></button>
     </div>
 
     <div class="scanlines" aria-hidden="true"></div>

@@ -1,17 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '../src/engine/rng';
 import { dictionaries } from '../src/game/i18n';
-import {
-  PERMANENT_IDS,
-  UPGRADES,
-  cost,
-  derive,
-  emptyLevels,
-  isMaxed,
-  rerollCost,
-  rollOffers,
-  shopAfterWave,
-} from '../src/game/upgrades';
+import { PERMANENT_IDS, UPGRADES, cost, derive, emptyLevels, isMaxed, rerollCost, rollOffers, shopAfterWave } from '../src/game/upgrades';
 
 describe('upgrade shop', () => {
   it('prices rise with each level and are multiples of 5', () => {
